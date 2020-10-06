@@ -12,7 +12,7 @@ class PythonAstParser(CodeParser):
         self.parser = Parser()
         self.parser.set_language(PY_LANGUAGE)
 
-    def parse_function(self, code: str) -> Dict[str, Any]:
+    def process_data(self, code: str) -> Dict[str, Any]:
         root = self.parser.parse(bytes(code, "utf8")).root_node
 
         def get_span(node: Node) -> str:
