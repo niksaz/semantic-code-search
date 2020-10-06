@@ -8,9 +8,11 @@
 
 ### Environment
 
-`$ conda create -n codesearch python=3.6 tensorflow-gpu=1.12.0`
-
-`$ pip install -r requirements.txt`
+```
+$ conda create -n codesearch python=3.6 tensorflow-gpu=1.12.0
+$ conda activate codesearch
+$ pip install -r requirements.txt
+```
 
 ## Training
 
