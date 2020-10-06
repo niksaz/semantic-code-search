@@ -14,7 +14,7 @@ $ conda activate codesearch
 $ pip install -r requirements.txt
 ```
 
-## Training
+### Training
 
 To train only on the python data, run:
 
@@ -24,3 +24,13 @@ $ python src/train.py --model neuralbow trained_models \
     resources/data/python/final/jsonl/valid \
     resources/data/python/final/jsonl/test
 ```
+
+### AST parsing
+
+For AST parsing we use [tree-sitter](https://github.com/tree-sitter/tree-sitter).
+To work with parsers, do the following:
+
+1. Clone the appropriate tree-sitter parser in `src/parsing/tree-sitter-languages`
+2. Add information about it to [setup_tree_sitter.py](src/parsing/setup_tree_sitter.py)
+3. Add the language to [utils.py](src/parsing/utils.py)
+4. Create a wrapper (see [PythonAstParser](src/parsing/python_ast_parser.py) for example)  
