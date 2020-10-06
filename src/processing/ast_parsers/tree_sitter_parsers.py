@@ -4,7 +4,14 @@ from tree_sitter import Language
 from tree_sitter.binding import Parser, Node
 
 from processing.code_parser import CodeParser
-from processing.utils import PY_LANGUAGE, JAVA_LANGUAGE, JS_LANGUAGE, GO_LANGUAGE, PHP_LANGUAGE, RUBY_LANGUAGE
+from processing.utils import tree_sitter_so
+
+GO_LANGUAGE = Language(tree_sitter_so(), 'go')
+JAVA_LANGUAGE = Language(tree_sitter_so(), 'java')
+JS_LANGUAGE = Language(tree_sitter_so(), 'javascript')
+PHP_LANGUAGE = Language(tree_sitter_so(), 'php')
+PY_LANGUAGE = Language(tree_sitter_so(), 'python')
+RUBY_LANGUAGE = Language(tree_sitter_so(), 'ruby')
 
 
 class TreeSitterAstParser(CodeParser):
