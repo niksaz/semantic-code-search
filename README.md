@@ -33,4 +33,4 @@ To work with parsers, do the following:
 1. Clone the appropriate tree-sitter parser in `src/parsing/tree-sitter-languages`
 2. Add information about it to [setup_tree_sitter.py](src/processing/setup_tree_sitter.py)
 3. Add the language to [utils.py](src/processing/utils.py)
-4. Create a wrapper (see [PythonAstParser](src/processing/ast_parsers/python_ast_parser.py) for example)  
+4. Create a wrapper (see [PythonAstParser](src/processing/ast_parsers/tree_sitter_parsers.py) for example)  
