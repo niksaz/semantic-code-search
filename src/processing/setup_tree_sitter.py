@@ -1,6 +1,6 @@
 from tree_sitter import Language
 
-from parsing.utils import tree_sitter_so, tree_sitter_languages
+from processing.utils import tree_sitter_so, tree_sitter_languages
 
 Language.build_library(
   # Store the library in the `build` directory

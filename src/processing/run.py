@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
-from parsing.python_ast_parser import PythonAstParser
+from processing.python_ast_parser import PythonAstParser
 
 parser = ArgumentParser()
 parser.add_argument("--input", type=str, required=True, help="Path to the folder with Python train/validation/test")

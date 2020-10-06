@@ -1,8 +1,8 @@
 from typing import Dict, Any
 from tree_sitter.binding import Parser, Node
 
-from parsing.code_parser import CodeParser
-from parsing.utils import PY_LANGUAGE
+from processing.code_parser import CodeParser
+from processing.utils import PY_LANGUAGE
 
 
 class PythonAstParser(CodeParser):
