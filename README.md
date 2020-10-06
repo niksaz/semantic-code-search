@@ -18,4 +18,9 @@ $ pip install -r requirements.txt
 
 To train only on the python data, run:
 
-`$ python src/train.py --model neuralbow trained_models resources/data/python/final/jsonl/train resources/data/python/final/jsonl/valid resources/data/python/final/jsonl/test`
+```
+$ python src/train.py --model neuralbow trained_models \
+    resources/data/python/final/jsonl/train \
+    resources/data/python/final/jsonl/valid \
+    resources/data/python/final/jsonl/test
+```
