@@ -13,10 +13,11 @@ class PythonAstParser(CodeParser):
         self.parser.set_language(PY_LANGUAGE)
 
     def parse_function(self, code: str) -> Dict[str, Any]:
-        root = self.parser.parse(bytes(code, "utf8")).root_node
+        bytecode = bytes(code, "utf8")
+        root = self.parser.parse(bytecode).root_node
 
         def get_span(node: Node) -> str:
-            return code[node.start_byte:node.end_byte]
+            return str(bytecode[node.start_byte:node.end_byte], "utf8")
 
         def build_json_tree(node: Node) -> Dict[str, Any]:
             return {
