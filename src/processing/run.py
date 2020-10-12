@@ -4,7 +4,7 @@ from pathlib import Path
 from processing.ast_parsers.tree_sitter_parsers import *
 
 parser = ArgumentParser()
-parser.add_argument("--input", type=str, required=True, help="Path to the folder with Python train/validation/test")
+parser.add_argument("--input", type=str, required=True, help="Path to the folder with train/validation/test data")
 parser.add_argument("--output", type=str, required=True, help="Path to the folder to store parsed trees")
 parser.add_argument("--language", type=str, required=True, help="Select language for parsing")
 args = parser.parse_args()
