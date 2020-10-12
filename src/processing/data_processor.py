@@ -9,9 +9,6 @@ from tqdm import tqdm
 
 class DataProcessor(ABC):
 
-    def __init__(self) -> None:
-        pass
-
     def parse_subfolders(self, input_folder: Path, output_folder: Path) -> None:
         subfolders = os.listdir(input_folder)
         input_subfolders = [input_folder / f for f in subfolders]
