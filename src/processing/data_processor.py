@@ -1,16 +1,15 @@
 import os
-
-from typing import Dict, Any
 from abc import ABC, abstractmethod
 from pathlib import Path
-from tqdm import tqdm
+from typing import Dict, Any
 
 from dpu_utils.utils import RichPath
+from tqdm import tqdm
 
 
-class CodeParser(ABC):
+class DataProcessor(ABC):
 
-    def __init__(self, ) -> None:
+    def __init__(self) -> None:
         pass
 
     def parse_subfolders(self, input_folder: Path, output_folder: Path) -> None:
@@ -29,16 +28,20 @@ class CodeParser(ABC):
             self.parse_jsonl_file(file, output_folder)
 
     def parse_jsonl_file(self, file: Path, output_folder: Path) -> None:
-        print(f"Parsing files in {file}")
+        print(f"Parsing data in {file}")
         input_file = RichPath.create(str(file))
         output_file = RichPath.create(str(output_folder / input_file.basename()))
         parsed_code = [
-            self.parse_function(raw_json_object['code'])
+            self.process_data(self.extract_from_raw_data(raw_json_object))
             for raw_json_object in tqdm(input_file.read_by_file_suffix())
         ]
-        print(f"Saving compressed trees in {output_file}")
+        print(f"Saving processed data in {output_file}")
         output_file.save_as_compressed_file(parsed_code)
 
     @abstractmethod
-    def parse_function(self, code: str) -> Dict[str, Any]:
+    def extract_from_raw_data(self, raw_json_object: Dict[str, Any]) -> Any:
+        pass
+
+    @abstractmethod
+    def process_data(self, code: str) -> Dict[str, Any]:
         pass
