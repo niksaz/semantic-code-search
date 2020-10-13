@@ -29,5 +29,5 @@ def _get_types_bag_from_tree(tree: collections.OrderedDict):
 
 
 def mix_raw_tree_in(raw_sample, raw_tree):
-  raw_sample['code_tokens'].extend(_get_types_bag_from_tree(raw_tree))
+  raw_sample['raw_tree'] = raw_tree
   return raw_sample
