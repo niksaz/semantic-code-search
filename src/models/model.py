@@ -61,7 +61,7 @@ def parse_data_file(hyperparameters: Dict[str, Any],
             "code",
              hyperparameters,
              per_code_language_metadata[language],
-             data_sample['code_tokens'],
+             data_sample,
              function_name,
              sample,
              is_test)
@@ -404,7 +404,7 @@ class Model(ABC):
 
             for data_sample in data_pipeline.combined_samples_generator(file_path):
                 sample_language = data_sample['language']
-                self.__code_encoder_type.load_metadata_from_sample(data_sample['code_tokens'],
+                self.__code_encoder_type.load_metadata_from_sample(data_sample,
                                                                    per_code_language_metadata[sample_language],
                                                                    self.hyperparameters['code_use_subtokens'],
                                                                    self.hyperparameters['code_mark_subtoken_end'])
@@ -933,7 +933,7 @@ class Model(ABC):
                     "code",
                     self.hyperparameters,
                     self.__per_code_language_metadata[language],
-                    code_tokens,
+                    sample_to_parse,
                     function_name,
                     result_holder=result_holder,
                     is_test=True)

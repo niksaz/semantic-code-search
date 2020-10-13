@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+from encoders import CodeTokensTypesEncoder
 from encoders import NBoWEncoder
 from .model import Model
 
@@ -28,7 +29,7 @@ class NeuralBoWModel(Model):
                  log_save_dir: Optional[str] = None):
         super().__init__(
             hyperparameters,
-            code_encoder_type=NBoWEncoder,
+            code_encoder_type=CodeTokensTypesEncoder,
             query_encoder_type=NBoWEncoder,
             run_name=run_name,
             model_save_dir=model_save_dir,

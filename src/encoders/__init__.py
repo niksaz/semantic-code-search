@@ -4,3 +4,4 @@ from .rnn_seq_encoder import RNNEncoder
 from .self_att_encoder import SelfAttentionEncoder
 from .conv_seq_encoder import ConvolutionSeqEncoder
 from .conv_self_att_encoder import ConvSelfAttentionEncoder
+from .code_tokens_types_encoder import CodeTokensTypesEncoder
