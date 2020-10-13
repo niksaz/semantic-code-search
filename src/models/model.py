@@ -48,7 +48,7 @@ def parse_data_file(hyperparameters: Dict[str, Any],
                     is_test: bool,
                     data_file: RichPath) -> Dict[str, List[Tuple[bool, Dict[str, Any]]]]:
     results: DefaultDict[str, List] = defaultdict(list)
-    raw_tree_path = ast_handler.query_to_raw_tree_path(data_file)
+    raw_tree_path = ast_handler.query_to_raw_tree_path(data_file, language='python')
     for raw_tree, raw_sample in zip(raw_tree_path.read_by_file_suffix(), data_file.read_by_file_suffix()):
         raw_sample = ast_handler.mix_raw_tree_in(raw_sample, raw_tree)
         sample: Dict = {}
@@ -404,7 +404,7 @@ class Model(ABC):
             raw_query_metadata = self.__query_encoder_type.init_metadata()
             per_code_language_metadata: DefaultDict[str, Dict[str, Any]] = defaultdict(self.__code_encoder_type.init_metadata)
 
-            raw_tree_path = ast_handler.query_to_raw_tree_path(file_path)
+            raw_tree_path = ast_handler.query_to_raw_tree_path(file_path, language='python')
             for raw_tree, raw_sample in zip(raw_tree_path.read_by_file_suffix(), file_path.read_by_file_suffix()):
                 raw_sample = ast_handler.mix_raw_tree_in(raw_sample, raw_tree)
                 sample_language = raw_sample['language']

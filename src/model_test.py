@@ -215,7 +215,8 @@ def get_dataset_from(data_dirs: List[RichPath],
         chain(*chain(
             list(ast_handler.mix_raw_tree_in(raw_sample, raw_tree)
                  for raw_sample, raw_tree in zip(
-                        f.read_by_file_suffix(), ast_handler.query_to_raw_tree_path(f).read_by_file_suffix()))
+                        f.read_by_file_suffix(),
+                        ast_handler.query_to_raw_tree_path(f, language='python').read_by_file_suffix()))
             for f in data_files)))
 
     if use_func_names:
