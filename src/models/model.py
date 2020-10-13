@@ -592,7 +592,8 @@ class Model(ABC):
                 else:
                     full_query_batch_data[key] = value
             if language_to_reweighting_factor is not None:
-                language_weights.extend([language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['tokens']))
+                language_weights.extend(
+                    [language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['code_encoder']['tokens']))
 
         self.__query_encoder.minibatch_to_feed_dict(full_query_batch_data, final_minibatch, is_train)
         if language_to_reweighting_factor is not None:

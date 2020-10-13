@@ -1,6 +1,6 @@
 import collections
 import re
-from typing import List
+from typing import List, Set
 
 TreeNode = collections.OrderedDict
 
@@ -11,7 +11,7 @@ def _linearize_tree(node: TreeNode, linearization: List[TreeNode]):
     _linearize_tree(child, linearization)
 
 
-def _get_code_tokens_from_tree(tree: collections.OrderedDict):
+def _get_code_tokens_from_tree(tree: collections.OrderedDict) -> List:
   linearization = []
   _linearize_tree(tree, linearization)
   node_tokens = list(map(lambda node: node['string'], linearization))
@@ -20,7 +20,7 @@ def _get_code_tokens_from_tree(tree: collections.OrderedDict):
   return code_tokens
 
 
-def _get_types_bag_from_tree(tree: collections.OrderedDict):
+def _get_types_bag_from_tree(tree: collections.OrderedDict) -> Set:
   linearization = []
   _linearize_tree(tree, linearization)
   type_tokens = list(map(lambda node: node['type'], linearization))
@@ -29,5 +29,5 @@ def _get_types_bag_from_tree(tree: collections.OrderedDict):
 
 
 def mix_raw_tree_in(raw_sample, raw_tree):
-  raw_sample['raw_tree'] = raw_tree
+  raw_sample['types_list'] = list(_get_types_bag_from_tree(raw_tree))
   return raw_sample
