@@ -12,11 +12,11 @@ from scipy.spatial.distance import cdist
 import wandb
 
 import model_restore_helper
+from models import data_pipeline
 from models.model import get_data_files_from_directory, Model
 from dataextraction.python.parse_python_data import tokenize_python_from_string
 from dataextraction.utils import tokenize_docstring_from_string
 from dpu_utils.codeutils import split_identifier_into_parts
-from models import ast_handler
 
 
 def compute_ranks(src_representations: np.ndarray,
@@ -211,13 +211,7 @@ def get_dataset_from(data_dirs: List[RichPath],
                      use_func_names: bool=False, 
                      max_files_per_dir: Optional[int] = None) -> List[Dict[str, Any]]:
     data_files = sorted(get_data_files_from_directory(data_dirs, max_files_per_dir))
-    data = list(
-        chain(*chain(
-            list(ast_handler.mix_raw_tree_in(raw_sample, raw_tree)
-                 for raw_sample, raw_tree in zip(
-                        f.read_by_file_suffix(),
-                        ast_handler.query_to_raw_tree_path(f, language='python').read_by_file_suffix()))
-            for f in data_files)))
+    data = list(chain(*chain(list(data_pipeline.combined_samples_generator(f)) for f in data_files)))
 
     if use_func_names:
         # This task tries to match the function name to the code, by setting the function name as the query

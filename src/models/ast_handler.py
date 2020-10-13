@@ -2,14 +2,7 @@ import collections
 import re
 from typing import List
 
-from dpu_utils.utils import RichPath
-
 TreeNode = collections.OrderedDict
-
-
-def query_to_raw_tree_path(file_path: RichPath, language: str):
-  raw_tree_path = file_path.__str__().replace(f'/{language}/', f'/{language}_raw_trees/')
-  return RichPath.create(raw_tree_path)
 
 
 def _linearize_tree(node: TreeNode, linearization: List[TreeNode]):

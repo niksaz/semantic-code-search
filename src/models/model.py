@@ -13,7 +13,7 @@ import wandb
 import tensorflow as tf
 from dpu_utils.utils import RichPath
 
-from models import ast_handler
+from models import data_pipeline
 from utils.py_utils import run_jobs_in_parallel
 from encoders import Encoder, QueryType
 
@@ -48,22 +48,20 @@ def parse_data_file(hyperparameters: Dict[str, Any],
                     is_test: bool,
                     data_file: RichPath) -> Dict[str, List[Tuple[bool, Dict[str, Any]]]]:
     results: DefaultDict[str, List] = defaultdict(list)
-    raw_tree_path = ast_handler.query_to_raw_tree_path(data_file, language='python')
-    for raw_tree, raw_sample in zip(raw_tree_path.read_by_file_suffix(), data_file.read_by_file_suffix()):
-        raw_sample = ast_handler.mix_raw_tree_in(raw_sample, raw_tree)
+    for data_sample in data_pipeline.combined_samples_generator(data_file):
         sample: Dict = {}
-        language = raw_sample['language']
+        language = data_sample['language']
         if language.startswith('python'):  # In some datasets, we use 'python-2.7' and 'python-3'
             language = 'python'
 
         # the load_data_from_sample method call places processed data into sample, and
         # returns a boolean flag indicating if sample should be used
-        function_name = raw_sample.get('func_name')
+        function_name = data_sample.get('func_name')
         use_code_flag = code_encoder_class.load_data_from_sample(
             "code",
              hyperparameters,
              per_code_language_metadata[language],
-             raw_sample['code_tokens'],
+             data_sample['code_tokens'],
              function_name,
              sample,
              is_test)
@@ -72,7 +70,7 @@ def parse_data_file(hyperparameters: Dict[str, Any],
             "query",
             hyperparameters,
             query_metadata,
-            [d.lower() for d in raw_sample['docstring_tokens']],
+            [d.lower() for d in data_sample['docstring_tokens']],
             function_name,
             sample,
             is_test)
@@ -404,15 +402,13 @@ class Model(ABC):
             raw_query_metadata = self.__query_encoder_type.init_metadata()
             per_code_language_metadata: DefaultDict[str, Dict[str, Any]] = defaultdict(self.__code_encoder_type.init_metadata)
 
-            raw_tree_path = ast_handler.query_to_raw_tree_path(file_path, language='python')
-            for raw_tree, raw_sample in zip(raw_tree_path.read_by_file_suffix(), file_path.read_by_file_suffix()):
-                raw_sample = ast_handler.mix_raw_tree_in(raw_sample, raw_tree)
-                sample_language = raw_sample['language']
-                self.__code_encoder_type.load_metadata_from_sample(raw_sample['code_tokens'],
+            for data_sample in data_pipeline.combined_samples_generator(file_path):
+                sample_language = data_sample['language']
+                self.__code_encoder_type.load_metadata_from_sample(data_sample['code_tokens'],
                                                                    per_code_language_metadata[sample_language],
                                                                    self.hyperparameters['code_use_subtokens'],
                                                                    self.hyperparameters['code_mark_subtoken_end'])
-                self.__query_encoder_type.load_metadata_from_sample([d.lower() for d in raw_sample['docstring_tokens']],
+                self.__query_encoder_type.load_metadata_from_sample([d.lower() for d in data_sample['docstring_tokens']],
                                                                     raw_query_metadata)
             yield (raw_query_metadata, per_code_language_metadata)
 
