@@ -1,4 +1,3 @@
-import re
 from typing import Any, Dict, Optional, Tuple, List
 
 import tensorflow as tf
@@ -16,9 +15,10 @@ def _linearize_tree(node: data_pipeline.TreeNode, linearization: List[data_pipel
 def _get_code_tokens_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
   linearization = []
   _linearize_tree(tree, linearization)
-  node_tokens = list(map(lambda node: node['string'], linearization))
-  python_identifier_pattern = re.compile(r'^[^\d\W]\w*\Z', re.UNICODE)
-  code_tokens = list(filter(lambda token: re.match(python_identifier_pattern, token), node_tokens))
+  code_tokens = []
+  for node in linearization:
+    node_tokens = node['string'].split()
+    code_tokens.extend(node_tokens)
   return code_tokens
 
 
@@ -74,7 +74,7 @@ class CodeTokensASTEncoder(Encoder):
   def load_metadata_from_sample(cls, data_to_load: Any, raw_metadata: Dict[str, Any],
                                 use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
     cls.CODE_ENCODER_CLASS.load_metadata_from_sample(
-      data_to_load[data_pipeline.CODE_TOKENS_LABEL],
+      _get_code_tokens_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       raw_metadata[cls.CODE_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -112,7 +112,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.CODE_ENCODER_LABEL],
-      data_to_load[data_pipeline.CODE_TOKENS_LABEL],
+      _get_code_tokens_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       function_name,
       result_holder[cls.CODE_ENCODER_LABEL],
       is_test)
