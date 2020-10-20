@@ -1,6 +1,6 @@
 import collections
 import re
-from typing import Any, Dict, Optional, Tuple, List, Set
+from typing import Any, Dict, Optional, Tuple, List
 
 import tensorflow as tf
 

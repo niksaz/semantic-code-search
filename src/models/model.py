@@ -1,5 +1,4 @@
 import os
-import itertools
 import multiprocessing
 import random
 import time
