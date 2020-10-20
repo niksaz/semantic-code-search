@@ -1,21 +1,17 @@
-from collections import defaultdict
 from itertools import chain
 from typing import Optional, List, Dict, Any, NamedTuple, Iterable, Tuple
 import logging
-import random
 
 from dpu_utils.mlutils import Vocabulary
 from dpu_utils.utils import RichPath
 import numpy as np
-from more_itertools import chunked, flatten
+from more_itertools import chunked
 from scipy.spatial.distance import cdist
 import wandb
 
 import model_restore_helper
-from models import data_pipeline
+from utils import data_pipeline
 from models.model import get_data_files_from_directory, Model
-from dataextraction.python.parse_python_data import tokenize_python_from_string
-from dataextraction.utils import tokenize_docstring_from_string
 from dpu_utils.codeutils import split_identifier_into_parts
 
 

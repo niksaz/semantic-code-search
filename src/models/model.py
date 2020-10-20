@@ -12,7 +12,7 @@ import wandb
 import tensorflow as tf
 from dpu_utils.utils import RichPath
 
-from models import data_pipeline
+from utils import data_pipeline
 from utils.py_utils import run_jobs_in_parallel
 from encoders import Encoder, QueryType
 

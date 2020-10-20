@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Tuple, List
 import tensorflow as tf
 
 from . import Encoder, QueryType, NBoWEncoder
-from models import data_pipeline
+from utils import data_pipeline
 
 TreeNode = collections.OrderedDict
 
