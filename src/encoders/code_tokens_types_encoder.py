@@ -1,4 +1,3 @@
-import collections
 import re
 from typing import Any, Dict, Optional, Tuple, List
 
@@ -7,16 +6,14 @@ import tensorflow as tf
 from . import Encoder, QueryType, NBoWEncoder
 from utils import data_pipeline
 
-TreeNode = collections.OrderedDict
 
-
-def _linearize_tree(node: TreeNode, linearization: List[TreeNode]):
+def _linearize_tree(node: data_pipeline.TreeNode, linearization: List[data_pipeline.TreeNode]):
   linearization.append(node)
   for child in node['children']:
     _linearize_tree(child, linearization)
 
 
-def _get_code_tokens_from_tree(tree: TreeNode) -> List[str]:
+def _get_code_tokens_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
   linearization = []
   _linearize_tree(tree, linearization)
   node_tokens = list(map(lambda node: node['string'], linearization))
@@ -25,7 +22,7 @@ def _get_code_tokens_from_tree(tree: TreeNode) -> List[str]:
   return code_tokens
 
 
-def _get_type_bag_from_tree(tree: TreeNode) -> List[str]:
+def _get_type_bag_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
   linearization = []
   _linearize_tree(tree, linearization)
   type_tokens = list(map(lambda node: node['type'], linearization))
