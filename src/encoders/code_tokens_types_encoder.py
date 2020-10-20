@@ -1,18 +1,43 @@
-from typing import Any, Dict, Optional, Tuple, List
+import collections
+import re
+from typing import Any, Dict, Optional, Tuple, List, Set
 
 import tensorflow as tf
 
 from . import Encoder, QueryType, NBoWEncoder
+from models import data_pipeline
+
+TreeNode = collections.OrderedDict
+
+
+def _linearize_tree(node: TreeNode, linearization: List[TreeNode]):
+  linearization.append(node)
+  for child in node['children']:
+    _linearize_tree(child, linearization)
+
+
+def _get_code_tokens_from_tree(tree: TreeNode) -> List[str]:
+  linearization = []
+  _linearize_tree(tree, linearization)
+  node_tokens = list(map(lambda node: node['string'], linearization))
+  python_identifier_pattern = re.compile(r'^[^\d\W]\w*\Z', re.UNICODE)
+  code_tokens = list(filter(lambda token: re.match(python_identifier_pattern, token), node_tokens))
+  return code_tokens
+
+
+def _get_type_bag_from_tree(tree: TreeNode) -> List[str]:
+  linearization = []
+  _linearize_tree(tree, linearization)
+  type_tokens = list(map(lambda node: node['type'], linearization))
+  type_bag = set(type_tokens)
+  return list(type_bag)
 
 
 class CodeTokensTypesEncoder(Encoder):
-
   CODE_ENCODER_CLASS = NBoWEncoder
   TYPE_ENCODER_CLASS = NBoWEncoder
   CODE_ENCODER_LABEL = 'code_encoder'
   TYPE_ENCODER_LABEL = 'type_encoder'
-  CODE_SAMPLE_KEY = 'code_tokens'
-  TYPE_SAMPLE_KEY = 'types_list'
 
   def __init__(self, label: str, hyperparameters: Dict[str, Any], metadata: Dict[str, Any]):
     super().__init__(label, hyperparameters, metadata)
@@ -52,12 +77,12 @@ class CodeTokensTypesEncoder(Encoder):
   def load_metadata_from_sample(cls, data_to_load: Any, raw_metadata: Dict[str, Any],
                                 use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
     cls.CODE_ENCODER_CLASS.load_metadata_from_sample(
-      data_to_load[cls.CODE_SAMPLE_KEY],
+      data_to_load[data_pipeline.CODE_TOKENS_LABEL],
       raw_metadata[cls.CODE_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
     cls.TYPE_ENCODER_CLASS.load_metadata_from_sample(
-      data_to_load[cls.TYPE_SAMPLE_KEY],
+      _get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       raw_metadata[cls.TYPE_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -90,7 +115,7 @@ class CodeTokensTypesEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.CODE_ENCODER_LABEL],
-      data_to_load[cls.CODE_SAMPLE_KEY],
+      data_to_load[data_pipeline.CODE_TOKENS_LABEL],
       function_name,
       result_holder[cls.CODE_ENCODER_LABEL],
       is_test)
@@ -100,7 +125,7 @@ class CodeTokensTypesEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.TYPE_ENCODER_LABEL],
-      data_to_load[cls.TYPE_SAMPLE_KEY],
+      _get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       function_name,
       result_holder[cls.TYPE_ENCODER_LABEL],
       is_test)
