@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional
 
-from encoders import CodeTokensTypesEncoder
+from encoders import CodeTokensASTEncoder
 from .nbow_model import NeuralBoWModel
 
 
-class NeuralBoWTypeModel(NeuralBoWModel):
+class NeuralBoWASTModel(NeuralBoWModel):
   def __init__(self,
                hyperparameters: Dict[str, Any],
                run_name: str = None,
@@ -15,4 +15,4 @@ class NeuralBoWTypeModel(NeuralBoWModel):
       run_name=run_name,
       model_save_dir=model_save_dir,
       log_save_dir=log_save_dir,
-      code_encoder_type=CodeTokensTypesEncoder)
+      code_encoder_type=CodeTokensASTEncoder)
