@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, Tuple, List
 
 import tensorflow as tf
 
-from . import Encoder, QueryType, NBoWEncoder
+from . import Encoder, QueryType, NBoWEncoder, TBCNNEncoder
 from utils import data_pipeline
 
 
@@ -32,9 +32,22 @@ def _get_type_bag_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
 
 class CodeTokensASTEncoder(Encoder):
   CODE_ENCODER_CLASS = NBoWEncoder
-  AST_ENCODER_CLASS = NBoWEncoder
+  AST_ENCODER_CLASS = TBCNNEncoder
   CODE_ENCODER_LABEL = 'code_encoder'
   AST_ENCODER_LABEL = 'ast_encoder'
+
+  @classmethod
+  def get_default_hyperparameters(cls) -> Dict[str, Any]:
+    code_hypers = cls.CODE_ENCODER_CLASS.get_default_hyperparameters()
+    ast_hypers = cls.AST_ENCODER_CLASS.get_default_hyperparameters()
+    for key, value in ast_hypers.items():
+      if key in code_hypers and code_hypers[key] != value:
+        raise AssertionError(
+          f'The same hyperparameter is set differently for code {code_hypers[key]} and for ast {value}.')
+    hypers = {}
+    hypers.update(code_hypers)
+    hypers.update(ast_hypers)
+    return hypers
 
   def __init__(self, label: str, hyperparameters: Dict[str, Any], metadata: Dict[str, Any]):
     super().__init__(label, hyperparameters, metadata)
@@ -46,10 +59,6 @@ class CodeTokensASTEncoder(Encoder):
       label,
       hyperparameters,
       metadata[self.AST_ENCODER_LABEL])
-
-  @classmethod
-  def get_default_hyperparameters(cls) -> Dict[str, Any]:
-    return {}
 
   @property
   def output_representation_size(self) -> int:
@@ -79,7 +88,7 @@ class CodeTokensASTEncoder(Encoder):
       use_subtokens,
       mark_subtoken_end)
     cls.AST_ENCODER_CLASS.load_metadata_from_sample(
-      _get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      data_to_load[data_pipeline.RAW_TREE_LABEL],
       raw_metadata[cls.AST_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -122,7 +131,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.AST_ENCODER_LABEL],
-      _get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      data_to_load[data_pipeline.RAW_TREE_LABEL],
       function_name,
       result_holder[cls.AST_ENCODER_LABEL],
       is_test)

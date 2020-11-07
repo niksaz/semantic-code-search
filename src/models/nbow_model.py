@@ -25,13 +25,11 @@ class NeuralBoWModel(Model):
                  hyperparameters: Dict[str, Any],
                  run_name: str = None,
                  model_save_dir: Optional[str] = None,
-                 log_save_dir: Optional[str] = None,
-                 code_encoder_type=NBoWEncoder,
-                 query_encoder_type=NBoWEncoder):
+                 log_save_dir: Optional[str] = None):
         super().__init__(
             hyperparameters,
-            code_encoder_type=code_encoder_type,
-            query_encoder_type=query_encoder_type,
+            code_encoder_type=NBoWEncoder,
+            query_encoder_type=NBoWEncoder,
             run_name=run_name,
             model_save_dir=model_save_dir,
             log_save_dir=log_save_dir)

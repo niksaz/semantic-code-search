@@ -5,18 +5,13 @@ import math
 import tensorflow as tf
 
 
-def init_net(feature_size, label_size):
+def init_net(nodes, children, feature_size):
     """Initialize an empty network."""
 
-    with tf.name_scope('inputs'):
-        nodes = tf.placeholder(tf.float32, shape=(None, None, feature_size), name='tree')
-        children = tf.placeholder(tf.int32, shape=(None, None, None), name='children')
-
     with tf.name_scope('network'):
-        conv1 = conv_layer(1, 100, nodes, children, feature_size)
-        #conv2 = conv_layer(1, 10, conv1, children, 100)
+        conv1 = conv_layer(1, feature_size, nodes, children, feature_size)
         pooling = pooling_layer(conv1)
-        hidden = hidden_layer(pooling, 100, label_size)
+        hidden = hidden_layer(pooling, feature_size, feature_size)
 
     with tf.name_scope('summaries'):
         tf.summary.scalar('tree_size', tf.shape(nodes)[1])
@@ -26,7 +21,7 @@ def init_net(feature_size, label_size):
         tf.summary.image('conv1', tf.expand_dims(conv1, axis=3))
         #tf.summary.image('conv2', tf.expand_dims(conv2, axis=3))
 
-    return nodes, children, hidden
+    return hidden
 
 
 def conv_layer(num_conv, output_size, nodes, children, feature_size):
@@ -287,3 +282,19 @@ def out_layer(logits_node):
     """Apply softmax to the output layer."""
     with tf.name_scope('output'):
         return tf.nn.softmax(logits_node)
+
+
+def pad_batch(node_type_ids, children):
+    if not node_type_ids:
+        return [], []
+    max_nodes = max([len(x) for x in node_type_ids])
+    max_children = max([len(x) for x in children])
+    child_len = max([len(c) for n in children for c in n])
+
+    node_type_ids = [n + [-1] * (max_nodes - len(n)) for n in node_type_ids]
+    # pad batches so that every batch has the same number of nodes
+    children = [n + ([[]] * (max_children - len(n))) for n in children]
+    # pad every child sample so every node has the same number of children
+    children = [[c + [0] * (child_len - len(c)) for c in sample] for sample in children]
+
+    return node_type_ids, children
