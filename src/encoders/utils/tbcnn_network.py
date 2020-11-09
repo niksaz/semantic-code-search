@@ -10,7 +10,8 @@ def init_net(nodes, children, feature_size):
 
     with tf.name_scope('network'):
         conv1 = conv_layer(1, feature_size, nodes, children, feature_size)
-        pooling = pooling_layer(conv1)
+        conv2 = conv_layer(1, feature_size, conv1, children, feature_size)
+        pooling = pooling_layer(conv2)
         hidden = hidden_layer(pooling, feature_size, feature_size)
 
     with tf.name_scope('summaries'):
@@ -19,7 +20,7 @@ def init_net(nodes, children, feature_size):
         tf.summary.histogram('logits', hidden)
         tf.summary.image('inputs', tf.expand_dims(nodes, axis=3))
         tf.summary.image('conv1', tf.expand_dims(conv1, axis=3))
-        #tf.summary.image('conv2', tf.expand_dims(conv2, axis=3))
+        tf.summary.image('conv2', tf.expand_dims(conv2, axis=3))
 
     return hidden
 
