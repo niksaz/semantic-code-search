@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict, OrderedDict
 from enum import Enum, auto
 from typing import List, Dict, Any, Iterable, Tuple, Optional, Union, Callable, Type, DefaultDict
+import tqdm
 
 import numpy as np
 import wandb
@@ -47,7 +48,7 @@ def parse_data_file(hyperparameters: Dict[str, Any],
                     is_test: bool,
                     data_file: RichPath) -> Dict[str, List[Tuple[bool, Dict[str, Any]]]]:
     results: DefaultDict[str, List] = defaultdict(list)
-    for data_sample in data_pipeline.combined_samples_generator(data_file):
+    for data_sample in tqdm.tqdm(data_pipeline.combined_samples_generator(data_file)):
         sample: Dict = {}
         language = data_sample['language']
         if language.startswith('python'):  # In some datasets, we use 'python-2.7' and 'python-3'
@@ -477,6 +478,7 @@ class Model(ABC):
             per_file_results = [parse_data_file(*task_args) for task_args in tasks_as_args]
         samples: DefaultDict[str, List] = defaultdict(list)
         num_all_samples = 0
+        print('Aggregating samples...')
         for per_file_result in per_file_results:
             for (language, parsed_samples) in per_file_result.items():
                 for (use_example, parsed_sample) in parsed_samples:
@@ -485,6 +487,7 @@ class Model(ABC):
                         samples[language].append(parsed_sample)
         if return_num_original_samples:
             return samples, num_all_samples
+        print('Returning samples...')
         return samples
 
     def __init_minibatch(self) -> Dict[str, Any]:
@@ -592,7 +595,7 @@ class Model(ABC):
                     full_query_batch_data[key] = value
             if language_to_reweighting_factor is not None:
                 language_weights.extend(
-                    [language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['code_encoder']['tokens']))
+                    [language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['ast_encoder']['node_masks']))
 
         self.__query_encoder.minibatch_to_feed_dict(full_query_batch_data, final_minibatch, is_train)
         if language_to_reweighting_factor is not None:
