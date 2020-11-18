@@ -57,8 +57,8 @@ def combined_samples_generator(data_file: RichPath):
       raw_tree_path = _original_to_raw_tree_path(
         data_file,
         language=raw_sample['language'],
-        raw_tree_suffix='_raw_trees')
-        # raw_tree_suffix = '_compressed_100')
+        # raw_tree_suffix='_raw_trees')
+        raw_tree_suffix='_compressed_100')
       raw_tree_iterator = raw_tree_path.read_by_file_suffix()
     raw_tree = next(raw_tree_iterator)
     _remove_docstring_node(raw_tree)

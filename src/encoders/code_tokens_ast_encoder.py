@@ -2,37 +2,14 @@ from typing import Any, Dict, Optional, Tuple, List
 
 import tensorflow as tf
 
-from . import Encoder, QueryType, NBoWEncoder, TBCNNEncoder
+from . import Encoder, QueryType, NBoWEncoder
 from utils import data_pipeline
-
-
-def _linearize_tree(node: data_pipeline.TreeNode, linearization: List[data_pipeline.TreeNode]):
-  linearization.append(node)
-  for child in node['children']:
-    _linearize_tree(child, linearization)
-
-
-def _get_code_tokens_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
-  linearization = []
-  _linearize_tree(tree, linearization)
-  code_tokens = []
-  for node in linearization:
-    node_tokens = node['string'].split()
-    code_tokens.extend(node_tokens)
-  return code_tokens
-
-
-def _get_type_bag_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
-  linearization = []
-  _linearize_tree(tree, linearization)
-  type_tokens = list(map(lambda node: node['type'], linearization))
-  type_bag = set(type_tokens)
-  return list(type_bag)
+from .utils import tree_processing
 
 
 class CodeTokensASTEncoder(Encoder):
   CODE_ENCODER_CLASS = NBoWEncoder
-  AST_ENCODER_CLASS = TBCNNEncoder
+  AST_ENCODER_CLASS = NBoWEncoder
   CODE_ENCODER_LABEL = 'code_encoder'
   AST_ENCODER_LABEL = 'ast_encoder'
 
@@ -83,12 +60,12 @@ class CodeTokensASTEncoder(Encoder):
   def load_metadata_from_sample(cls, data_to_load: Any, raw_metadata: Dict[str, Any],
                                 use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
     cls.CODE_ENCODER_CLASS.load_metadata_from_sample(
-      _get_code_tokens_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      tree_processing.get_code_tokens_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       raw_metadata[cls.CODE_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
     cls.AST_ENCODER_CLASS.load_metadata_from_sample(
-      data_to_load[data_pipeline.RAW_TREE_LABEL],
+      tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       raw_metadata[cls.AST_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -121,7 +98,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.CODE_ENCODER_LABEL],
-      _get_code_tokens_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      tree_processing.get_code_tokens_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       function_name,
       result_holder[cls.CODE_ENCODER_LABEL],
       is_test)
@@ -131,7 +108,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.AST_ENCODER_LABEL],
-      data_to_load[data_pipeline.RAW_TREE_LABEL],
+      tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       function_name,
       result_holder[cls.AST_ENCODER_LABEL],
       is_test)
