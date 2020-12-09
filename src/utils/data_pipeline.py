@@ -63,7 +63,12 @@ def combined_samples_generator(
         raw_tree_suffix=raw_tree_suffix)
       raw_tree_iterator = raw_tree_path.read_by_file_suffix()
     raw_tree = next(raw_tree_iterator)
-    _remove_docstring_node(raw_tree)
+    if raw_tree_suffix in ['_raw_trees', '_compressed_100']:
+      _remove_docstring_node(raw_tree)
+    elif raw_tree_suffix == '_graphs':
+      pass
+    else:
+      raise ValueError('Unknown resource type:', raw_tree_suffix)
     assert RAW_TREE_LABEL not in raw_sample
     raw_sample[RAW_TREE_LABEL] = raw_tree
     yield raw_sample
