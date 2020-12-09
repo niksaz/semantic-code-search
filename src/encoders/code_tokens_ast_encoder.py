@@ -1,15 +1,41 @@
+import pickle
 from typing import Any, Dict, Optional, Tuple, List
+from collections import Counter
 
 import tensorflow as tf
 
-from . import Encoder, QueryType, NBoWEncoder
+from . import Encoder, QueryType, NBoWEncoder, PretrainedNBoWEncoder
 from utils import data_pipeline
 from .utils import tree_processing
+from dpu_utils.mlutils import Vocabulary
+
+
+def load_pretrained_metadata(encoder_label: str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+  vocabulary_path = '/home/zerogerc/msazanovich/CodeSearchNet/resources/embeddings/_compressed_100/type_to_index.pickle'
+  with open(vocabulary_path, 'rb') as fin:
+    token_to_index = pickle.load(fin)
+  # Fictive counts so that the ordering in the internal vocabulary will be the same as the indices in the dict.
+  token_to_count = {}
+  for token, index in token_to_index.items():
+    token_to_count[token] = len(token_to_index) - index
+  token_counter = Counter(token_to_count)
+  token_vocabulary = Vocabulary.create_vocabulary(
+    tokens=token_counter,
+    max_size=hyperparameters['%s_token_vocab_size' % encoder_label],
+    count_threshold=0)
+  print('token_to_index', token_to_index)
+  print('token_vocabulary.id_to_token', token_vocabulary.id_to_token)
+
+  final_metadata = {}
+  final_metadata['token_vocab'] = token_vocabulary
+  # Save the most common tokens for use in data augmentation:
+  final_metadata['common_tokens'] = token_counter.most_common(50)
+  return final_metadata
 
 
 class CodeTokensASTEncoder(Encoder):
   CODE_ENCODER_CLASS = NBoWEncoder
-  AST_ENCODER_CLASS = NBoWEncoder
+  AST_ENCODER_CLASS = PretrainedNBoWEncoder
   CODE_ENCODER_LABEL = 'code_encoder'
   AST_ENCODER_LABEL = 'ast_encoder'
 
@@ -82,7 +108,7 @@ class CodeTokensASTEncoder(Encoder):
           hyperparameters,
           code_encoder_metadata_list),
       cls.AST_ENCODER_LABEL:
-        cls.AST_ENCODER_CLASS.finalise_metadata(
+        load_pretrained_metadata(
           encoder_label,
           hyperparameters,
           ast_encoder_metadata_list),
