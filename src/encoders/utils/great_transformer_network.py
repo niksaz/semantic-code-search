@@ -36,7 +36,7 @@ class AttentionLayer(tf.keras.layers.Layer):
 		This class supports self-attention and key-value attention, with (non-optional) masks. If bias_dim is not None, the attention computation(s) assumes that a (sparse) bias vector is provided, formatted like: (edge_type, batch_index, key_index, query_index). Bias edge types are embedded in the same dimension as each head's attention and projected to a scalar before being inserted into the attention computation as (q + b) * k.
 	"""
 	
-	def __init__(self, attention_dim, num_heads=None, hidden_dim=None, bias_dim=None):
+	def __init__(self, attention_dim, num_heads=8, hidden_dim=None, bias_dim=None):
 		super(AttentionLayer, self).__init__()
 		self.attention_dim = attention_dim
 		self.hidden_dim = hidden_dim if hidden_dim is not None else self.attention_dim
@@ -126,9 +126,21 @@ class Transformer(tf.keras.layers.Layer):
 		To generate language from the resulting states, pass the states to the 'predict' function. Note that it assumes that the input vocabulary is output vocabulary (i.e., it reuses the model's embedding table).
 	"""
 	NOOP_BIAS = tf.zeros((0, 4), 'int32')
-	
-	def __init__(self, model_config, shared_embedding=None, vocab_dim=None, is_encoder_decoder=False):
+
+	default_config = {
+		'hidden_dim': 128,
+		'dropout_rate': 0.1,
+		'num_edge_types': 9,
+		'ff_dim': 2048,
+		'num_layers': 6,
+		'attention_dim': 128,
+		'num_heads': 8,
+	}
+
+	def __init__(self, model_config=None, shared_embedding=None, vocab_dim=None, is_encoder_decoder=False):
 		super(Transformer, self).__init__()
+		if model_config is None:
+			model_config = Transformer.default_config
 		self.is_encoder_decoder = is_encoder_decoder
 		self.bias_dim = model_config['num_edge_types']
 		self.hidden_dim = model_config['hidden_dim']

@@ -29,8 +29,18 @@ import tensorflow as tf
 
 
 class RNN(tf.keras.layers.Layer):
-	def __init__(self, model_config, shared_embedding=None, vocab_dim=None):
+
+	default_config = {
+		'hidden_dim': 128,
+		'dropout_rate': 0.1,
+		'num_edge_types': 9,
+		'num_layers': 2
+	}
+
+	def __init__(self, model_config=None, shared_embedding=None, vocab_dim=None):
 		super(RNN, self).__init__()
+		if model_config is None:
+			model_config = RNN.default_config
 		self.hidden_dim = model_config['hidden_dim']
 		self.num_layers = model_config['num_layers']
 		self.dropout_rate = model_config['dropout_rate']
