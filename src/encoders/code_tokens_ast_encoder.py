@@ -3,15 +3,16 @@ from typing import Any, Dict, Optional, Tuple, List
 import tensorflow as tf
 
 from . import Encoder, QueryType, NBoWEncoder, TBCNNEncoder
+from .ggnn_encoder import GGNNEncoder
 from .utils import tree_processing
 from utils import data_pipeline
 
 
 class CodeTokensASTEncoder(Encoder):
   CODE_ENCODER_CLASS = NBoWEncoder
-  AST_ENCODER_CLASS = TBCNNEncoder
+  AST_ENCODER_CLASS = GGNNEncoder
   CODE_ENCODER_LABEL = 'code_encoder'
-  AST_ENCODER_LABEL = 'ast_encoder'
+  AST_ENCODER_LABEL = 'ggnn_encoder'
 
   @classmethod
   def get_default_hyperparameters(cls) -> Dict[str, Any]:
@@ -65,7 +66,7 @@ class CodeTokensASTEncoder(Encoder):
     #   use_subtokens,
     #   mark_subtoken_end)
     cls.AST_ENCODER_CLASS.load_metadata_from_sample(
-      data_to_load[data_pipeline.RAW_TREE_LABEL],
+      data_to_load[data_pipeline.GRAPH_LABEL],
       raw_metadata[cls.AST_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -108,7 +109,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.AST_ENCODER_LABEL],
-      data_to_load[data_pipeline.RAW_TREE_LABEL],
+      data_to_load[data_pipeline.GRAPH_LABEL],
       function_name,
       result_holder[cls.AST_ENCODER_LABEL],
       is_test)
