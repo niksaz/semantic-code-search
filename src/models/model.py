@@ -595,7 +595,7 @@ class Model(ABC):
                     full_query_batch_data[key] = value
             if language_to_reweighting_factor is not None:
                 language_weights.extend(
-                    [language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['ast_encoder']['node_masks']))
+                    [language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['ggnn_encoder']['node_masks']))
 
         self.__query_encoder.minibatch_to_feed_dict(full_query_batch_data, final_minibatch, is_train)
         if language_to_reweighting_factor is not None:
@@ -730,6 +730,7 @@ class Model(ABC):
                 ops_to_run['train_step'] = self.__ops['train_step']
             op_results = self.__sess.run(ops_to_run, feed_dict=batch_data_dict)
             assert not np.isnan(op_results['loss'])
+            assert all(op_results['mrr'] <= 1.)
 
             epoch_loss += op_results['loss'] * samples_in_batch
             mrr_sum += np.sum(op_results['mrr'])

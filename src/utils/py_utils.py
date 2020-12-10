@@ -65,3 +65,4 @@ def run_jobs_in_parallel(all_jobs: List[JobType],
 
     for worker in workers:
         worker.join()
+    print("Finished parallel job")

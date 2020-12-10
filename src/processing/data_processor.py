@@ -9,12 +9,21 @@ from tqdm import tqdm
 
 class DataProcessor(ABC):
 
+    def __init__(self):
+        self.skipped = 0
+        self.failed = 0
+
     def parse_subfolders(self, input_folder: Path, output_folder: Path) -> None:
+        self.skipped = 0
+        self.failed = 0
+
         subfolders = os.listdir(input_folder)
         input_subfolders = [input_folder / f for f in subfolders]
         output_subfolders = [output_folder / f for f in subfolders]
         for input_subfolder, output_subfolder in zip(input_subfolders, output_subfolders):
             self.parse_folder(input_subfolder, output_subfolder)
+
+        print(f"Skipped {self.skipped} files\nFailed on {self.failed} files")
 
     def parse_folder(self, input_folder: Path, output_folder: Path) -> None:
         if not output_folder.exists():

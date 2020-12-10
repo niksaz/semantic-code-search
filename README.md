@@ -35,3 +35,11 @@ To work with parsers, do the following:
 3. Run [setup_tree_sitter.py](src/processing/setup_tree_sitter.py)
 4. Add a wrapper to [tree_sitter_parsers.py](src/processing/ast_parsers/tree_sitter_parsers.py)
 5. Add the language to [run.py](src/processing/run.py)
+
+### Graph parsing
+
+For graph parsing we use [typilus fork](https://github.com/JetBrains-Research/typilus).
+To work with graph parsers, do the following:
+
+1. Clone the aforementioned repository to `src/processing/typilus`
+
