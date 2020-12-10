@@ -3,16 +3,16 @@ from typing import Any, Dict, Optional, Tuple, List
 import tensorflow as tf
 
 from . import Encoder, QueryType, NBoWEncoder, TBCNNEncoder
-from .ggnn_encoder import GGNNEncoder
+from .graph_encoder import GraphEncoder
 from .utils import tree_processing
 from utils import data_pipeline
 
 
 class CodeTokensASTEncoder(Encoder):
   CODE_ENCODER_CLASS = NBoWEncoder
-  AST_ENCODER_CLASS = GGNNEncoder
+  AST_ENCODER_CLASS = GraphEncoder
   CODE_ENCODER_LABEL = 'code_encoder'
-  AST_ENCODER_LABEL = 'ggnn_encoder'
+  AST_ENCODER_LABEL = 'graph_encoder'
 
   @classmethod
   def get_default_hyperparameters(cls) -> Dict[str, Any]:

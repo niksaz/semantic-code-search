@@ -9,10 +9,10 @@ from utils import tfutils
 from utils.bpevocabulary import BpeVocabulary
 from utils.tfutils import pool_sequence_embedding
 from .encoder import Encoder, QueryType
-from .utils import ggnn_network, tree_processing
+from .utils import ggnn_network, tree_processing, great_transformer_network
 
 
-class GGNNEncoder(Encoder):
+class GraphEncoder(Encoder):
     @classmethod
     def get_default_hyperparameters(cls) -> Dict[str, Any]:
         encoder_hypers = {
