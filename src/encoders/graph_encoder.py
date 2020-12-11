@@ -143,28 +143,17 @@ class GraphEncoder(Encoder):
     def load_metadata_from_sample(cls, data_to_load: Any, raw_metadata: Dict[str, Any], use_subtokens: bool = False,
                                   mark_subtoken_end: bool = False) -> None:
         hypers = cls.get_default_hyperparameters()
-        if 'nodes' in data_to_load:
-            node_tokens = collections.Counter(token for token in data_to_load['nodes'])
-        else:
-            node_tokens = collections.Counter()
-        if 'edges' in data_to_load:
-            # print(data_to_load)
-            edge_types = {edge_type for edge_type in data_to_load['edges']}
-        else:
-            edge_types = set()
-        # print(node_tokens)
-        # node_tokens = []
-        # for node in nodes:
-        #   for node_token in node['string'].split():
-        #     if node_token != '|':
-        #       node_tokens.append(node_token)
+        assert 'nodes' in data_to_load
+        assert 'edges' in data_to_load
+        node_tokens = collections.Counter(token for token in data_to_load['nodes'])
+        edge_types = {edge_type for edge_type in data_to_load['edges']}
         raw_metadata['token_counter'].update(node_tokens)
         raw_metadata['edge_types'] = raw_metadata['edge_types'].union(edge_types)
 
     @classmethod
     def finalise_metadata(cls, encoder_label: str, hyperparameters: Dict[str, Any],
                           raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
-        print(encoder_label)
+        print("Finalising metadata")
         final_metadata = super().finalise_metadata(encoder_label, hyperparameters, raw_metadata_list)
         merged_token_counter = collections.Counter()
         merged_edge_types = set()
@@ -189,39 +178,32 @@ class GraphEncoder(Encoder):
 
         final_metadata['token_vocab'] = token_vocabulary
         final_metadata['edge_type_mapping'] = {edge_type: i for i, edge_type in enumerate(merged_edge_types)}
-        print('edge type mapping', final_metadata['edge_type_mapping'])
+        print('Edge type mapping:', final_metadata['edge_type_mapping'])
         return final_metadata
 
     @classmethod
     def load_data_from_sample(cls, encoder_label: str, hyperparameters: Dict[str, Any], metadata: Dict[str, Any],
                               data_to_load: Any, function_name: Optional[str], result_holder: Dict[str, Any],
                               is_test: bool = True) -> bool:
-        if 'nodes' in data_to_load:
-            node_tokens = data_to_load['nodes']
-        else:
-            node_tokens = ['<DUMMY>', '<DUMMY>']
-        if 'edges' in data_to_load:
-            edges = [
-                (metadata['edge_type_mapping'][edge_type], int(v), u)
-                for edge_type, edges_of_type in data_to_load['edges'].items()
-                for v, us in edges_of_type.items()
-                for u in us
-            ]
-        else:
-            edges = [(0, 0, 1)]
 
-        # for node in nodes:
-        #   for node_token in node['string'].split():
-        #     if node_token != '|':
-        #       node_tokens.append(node_token)
+        assert 'nodes' in data_to_load
+        assert 'edges' in data_to_load
+
+        node_tokens = data_to_load['nodes']
+        edges = np.array([
+            (metadata['edge_type_mapping'][edge_type], v, u)
+            for edge_type, edges_of_type in data_to_load['edges'].items()
+            for v, u in edges_of_type
+        ], dtype=np.int)
+
         node_token_ids, mask = (
             tfutils.convert_and_pad_token_sequence(
                 metadata['token_vocab'],
                 node_tokens,
                 hyperparameters[f'{encoder_label}_max_num_tokens'])
         )
-        result_holder[f'{encoder_label}_node_masks'] = list(mask)
-        result_holder[f'{encoder_label}_node_token_ids'] = list(node_token_ids)
+        result_holder[f'{encoder_label}_node_masks'] = mask
+        result_holder[f'{encoder_label}_node_token_ids'] = node_token_ids
         result_holder[f'{encoder_label}_edges'] = edges
         return True
 
@@ -255,8 +237,8 @@ class GraphEncoder(Encoder):
         if node_masks:
             # pad batches so that every batch has the same number of nodes
             max_tokens = max([len(x) for x in node_masks])
-            node_masks = [n + [0] * (max_tokens - len(n)) for n in node_masks]
-            node_token_ids = [n + [-1] * (max_tokens - len(n)) for n in node_token_ids]
+            node_masks = [list(n) + [0] * (max_tokens - len(n)) for n in node_masks]
+            node_token_ids = [list(n) + [-1] * (max_tokens - len(n)) for n in node_token_ids]
             edges = [
                 [edge_type, batch_id, v, u]
                 for batch_id, edge_pack in enumerate(edges)
