@@ -9,22 +9,39 @@ from utils import tfutils
 from utils.bpevocabulary import BpeVocabulary
 from utils.tfutils import pool_sequence_embedding
 from .encoder import Encoder, QueryType
-from .utils import ggnn_network, tree_processing, great_transformer_network
+from .utils import ggnn_network, tree_processing, great_transformer_network, rnn_network, util
 
 
 class GraphEncoder(Encoder):
+    encoder_hypers = {
+        'token_vocab_size': 10000,
+        'token_vocab_count_threshold': 10,
+        'token_embedding_size': 128,
+        'token_use_bpe': True,
+        'token_pct_bpe': 0.5,
+        'max_num_tokens': 200,
+        'stack': [],
+    }
+
+    @classmethod
+    def update_config(cls, mode: str):
+        if mode in ['ggnn', 'ggnnmodel']:
+            cls.encoder_hypers['stack'] = ['ggnn-pure']
+        elif mode in ['rnn-ggnn-sandwich']:
+            cls.encoder_hypers['stack'] = ['rnn', 'ggnn', 'rnn', 'ggnn', 'rnn']
+        elif mode in ['transformer-ggnn-sandwich']:
+            cls.encoder_hypers['stack'] = ['transformer', 'ggnn', 'transformer', 'ggnn', 'transformer']
+        elif mode in ['great', 'greatmodel']:
+            cls.encoder_hypers['stack'] = ['great']
+        elif mode in ['transformer', 'transformermodel']:
+            cls.encoder_hypers['stack'] = ['transformer']
+        else:
+            raise ValueError(f"Tried to update graph config with {mode}")
+
     @classmethod
     def get_default_hyperparameters(cls) -> Dict[str, Any]:
-        encoder_hypers = {
-            'token_vocab_size': 10000,
-            'token_vocab_count_threshold': 10,
-            'token_embedding_size': 128,
-            'token_use_bpe': True,
-            'token_pct_bpe': 0.5,
-            'max_num_tokens': 200,
-        }
         hypers = super().get_default_hyperparameters()
-        hypers.update(encoder_hypers)
+        hypers.update(cls.encoder_hypers)
         return hypers
 
     def __init__(self, label: str, hyperparameters: Dict[str, Any], metadata: Dict[str, Any]):
@@ -56,8 +73,40 @@ class GraphEncoder(Encoder):
         )
         return tf.nn.embedding_lookup(params=token_embeddings, ids=input_ids)
 
+    def _build_stack(self, states, is_train: bool):
+        stack = self.get_hyper('stack')
+        if stack[0] != 'rnn':
+            pos_enc = util.positional_encoding(self.get_hyper('token_embedding_size'), 5000)
+            states += pos_enc[:tf.shape(states)[1]]
+
+        vocab_dim = self.get_hyper(f'token_vocab_size')
+        for kind in self.get_hyper('stack'):
+            if kind in ['ggnn', 'ggnn-pure']:
+                if kind == 'ggnn':
+                    ggnn_network.GGNN.default_config['time_steps'] = [3, 1]
+                elif kind == 'ggnn-pure':
+                    ggnn_network.GGNN.default_config['time_steps'] = [3, 1, 3, 1]
+                ggnn_model = ggnn_network.GGNN(vocab_dim=vocab_dim)
+                states = ggnn_model(states, self.placeholders['edges'], is_train)
+            elif kind == 'rnn':
+                rnn_model = rnn_network.RNN(vocab_dim=vocab_dim)
+                states = rnn_model(states, is_train)
+            elif kind == 'great' or kind == 'transformer':
+                config = great_transformer_network.Transformer.default_config
+                if kind == 'transformer':
+                    config['num_edge_types'] = None
+                transformer_model = great_transformer_network.Transformer(config, vocab_dim=vocab_dim)
+
+                mask = self.placeholders['node_masks']
+                mask = tf.expand_dims(tf.expand_dims(mask, 1), 1)
+                edges = self.placeholders['edges']
+                attention_bias = tf.stack([edges[:, 0], edges[:, 1], edges[:, 3], edges[:, 2]], axis=1)
+                states = transformer_model(states, mask, attention_bias, training=is_train)
+
+        return states
+
     def make_model(self, is_train: bool = False) -> tf.Tensor:
-        with tf.variable_scope('ggnn_encoder'):
+        with tf.variable_scope('graph_encoder'):
             self._make_placeholders()
             node_tokens = self.token_embedding_layer(self.placeholders['node_token_ids'])
             print('node tokens', node_tokens.shape)
@@ -70,9 +119,10 @@ class GraphEncoder(Encoder):
                                                      sequence_lengths=node_token_lens,
                                                      sequence_token_masks=node_token_masks)
             print('token encoding', token_encoding.shape)
-            ggnn_model = ggnn_network.GGNN(vocab_dim=self.get_hyper(f'token_vocab_size'))
-            node_encodings = ggnn_model(node_tokens, self.placeholders['edges'], is_train)
-            print(node_encodings.shape)
+
+            node_encodings = self._build_stack(node_tokens, is_train)
+
+            print('node encoding', node_encodings.shape)
 
             graph_encoding = pool_sequence_embedding('mean',
                                                      sequence_token_embeddings=node_tokens,
@@ -80,6 +130,7 @@ class GraphEncoder(Encoder):
                                                      sequence_token_masks=node_token_masks)
 
         return graph_encoding + token_encoding
+        # return token_encoding
 
     @classmethod
     def init_metadata(cls) -> Dict[str, Any]:

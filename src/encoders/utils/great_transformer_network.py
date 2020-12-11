@@ -160,7 +160,7 @@ class Transformer(tf.keras.layers.Layer):
 			self.embed = tf.Variable(random_init([vocab_dim, self.hidden_dim]), dtype=tf.float32)
 		
 		# Initialize default positional encoding for very long sequences. Can make this a parameter if necessary.
-		self.pos_enc = tf.constant(util.positional_encoding(self.hidden_dim, 5000))
+		self.pos_enc = util.positional_encoding(self.hidden_dim, 5000)
 	
 	def build(self, _):
 		# Set up multi-headed attention, and feed-forward layers.

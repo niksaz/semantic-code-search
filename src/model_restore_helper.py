@@ -3,14 +3,37 @@ from typing import Dict, Any, Optional, Type
 import tensorflow as tf
 from dpu_utils.utils import RichPath
 
+from encoders import CodeTokensASTEncoder, TBCNNEncoder
+from encoders.graph_encoder import GraphEncoder
 from models import Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
 
 
 def get_model_class_from_name(model_name: str) -> Type[Model]:
     model_name = model_name.lower()
-    if model_name in ['neuralast', 'neuralastmodel']:
+    if model_name in ['ggnn', 'ggnnmodel']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name)
         return NeuralASTModel
-    if model_name in ['neuralbow', 'neuralbowmodel']:
+    elif model_name in ['rnn-ggnn-sandwich']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name)
+        return NeuralASTModel
+    elif model_name in ['transformer-ggnn-sandwich']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name)
+        return NeuralASTModel
+    elif model_name in ['great', 'greatmodel']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name)
+        return NeuralASTModel
+    elif model_name in ['transformer', 'transformermodel']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name)
+        return NeuralASTModel
+    elif model_name in ['neuralast', 'neuralastmodel']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder
+        return NeuralASTModel
+    elif model_name in ['neuralbow', 'neuralbowmodel']:
         return NeuralBoWModel
     elif model_name in ['rnn', 'rnnmodel']:
         return RNNModel
