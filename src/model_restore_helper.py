@@ -13,25 +13,31 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
     if model_name in ['ggnn', 'ggnnmodel']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
         GraphEncoder.update_config(model_name)
+        NeuralASTModel.MODEL_NAME = model_name
         return NeuralASTModel
     elif model_name in ['rnn-ggnn-sandwich']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
         GraphEncoder.update_config(model_name)
+        NeuralASTModel.MODEL_NAME = model_name
         return NeuralASTModel
     elif model_name in ['transformer-ggnn-sandwich']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
         GraphEncoder.update_config(model_name)
+        NeuralASTModel.MODEL_NAME = model_name
         return NeuralASTModel
     elif model_name in ['great', 'greatmodel']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
         GraphEncoder.update_config(model_name)
+        NeuralASTModel.MODEL_NAME = model_name
         return NeuralASTModel
     elif model_name in ['transformer', 'transformermodel']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
         GraphEncoder.update_config(model_name)
+        NeuralASTModel.MODEL_NAME = model_name
         return NeuralASTModel
     elif model_name in ['neuralast', 'neuralastmodel']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder
+        NeuralASTModel.MODEL_NAME = model_name
         return NeuralASTModel
     elif model_name in ['neuralbow', 'neuralbowmodel']:
         return NeuralBoWModel

@@ -194,6 +194,9 @@ class Model(ABC):
         self.__summary_writer.add_summary(summary, step)
         self.__summary_writer.flush()
 
+    def _get_model_name(self) -> str:
+        return type(self).__name__
+
     def save(self, path: RichPath) -> None:
         variables_to_save = list(set(self.__sess.graph.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)))
         weights_to_save = self.__sess.run(variables_to_save)
@@ -201,7 +204,7 @@ class Model(ABC):
                            for (var, value) in zip(variables_to_save, weights_to_save)}
 
         data_to_save = {
-                         "model_type": type(self).__name__,
+                         "model_type": self._get_model_name(),
                          "hyperparameters": self.hyperparameters,
                          "query_metadata": self.__query_metadata,
                          "per_code_language_metadata": self.__per_code_language_metadata,

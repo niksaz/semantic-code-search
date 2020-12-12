@@ -7,6 +7,7 @@ from .nbow_model import Model
 class NeuralASTModel(Model):
   CODE_ENCODER_TYPE = CodeTokensASTEncoder
   QUERY_ENCODER_TYPE = NBoWEncoder
+  MODEL_NAME = "neuralastmodel"
 
   @classmethod
   def get_default_hyperparameters(cls) -> Dict[str, Any]:
@@ -24,6 +25,9 @@ class NeuralASTModel(Model):
     hypers.update(super().get_default_hyperparameters())
     hypers.update(model_hypers)
     return hypers
+
+  def _get_model_name(self) -> str:
+    return self.MODEL_NAME
 
   def __init__(self,
                hyperparameters: Dict[str, Any],
