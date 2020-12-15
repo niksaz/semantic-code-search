@@ -1,3 +1,4 @@
+import collections
 import pickle
 from typing import Any, Dict, Optional, Tuple, List
 from collections import Counter
@@ -6,12 +7,19 @@ import tensorflow as tf
 
 from . import Encoder, QueryType, NBoWEncoder, PretrainedNBoWEncoder
 from utils import data_pipeline
-from .utils import tree_processing
 from dpu_utils.mlutils import Vocabulary
 
 
+def get_graph_nodes(graph: collections.OrderedDict) -> List[str]:
+  if graph:
+    return graph['nodes']
+  else:
+    return ['*#$%UNKNOWN*#$%']
+
+
 def load_pretrained_metadata(encoder_label: str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
-  vocabulary_path = '/home/zerogerc/msazanovich/CodeSearchNet/resources/embeddings/_compressed_100/type_to_index.pickle'
+  resource = '_graphs'
+  vocabulary_path = f'/home/zerogerc/msazanovich/CodeSearchNet/resources/embeddings/{resource}/token_to_index.pickle'
   with open(vocabulary_path, 'rb') as fin:
     token_to_index = pickle.load(fin)
   # Fictive counts so that the ordering in the internal vocabulary will be the same as the indices in the dict.
@@ -86,12 +94,12 @@ class CodeTokensASTEncoder(Encoder):
   def load_metadata_from_sample(cls, data_to_load: Any, raw_metadata: Dict[str, Any],
                                 use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
     cls.CODE_ENCODER_CLASS.load_metadata_from_sample(
-      tree_processing.get_code_tokens_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      data_to_load[data_pipeline.CODE_TOKENS_LABEL],
       raw_metadata[cls.CODE_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
     cls.AST_ENCODER_CLASS.load_metadata_from_sample(
-      tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      get_graph_nodes(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       raw_metadata[cls.AST_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -124,7 +132,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.CODE_ENCODER_LABEL],
-      tree_processing.get_code_tokens_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      data_to_load[data_pipeline.CODE_TOKENS_LABEL],
       function_name,
       result_holder[cls.CODE_ENCODER_LABEL],
       is_test)
@@ -134,7 +142,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.AST_ENCODER_LABEL],
-      tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      get_graph_nodes(data_to_load[data_pipeline.RAW_TREE_LABEL]),
       function_name,
       result_holder[cls.AST_ENCODER_LABEL],
       is_test)

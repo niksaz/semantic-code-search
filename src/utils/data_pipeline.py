@@ -52,7 +52,8 @@ def _original_to_raw_tree_path(file_path: RichPath, language: str, raw_tree_suff
 def combined_samples_generator(
     data_file: RichPath,
     # raw_tree_suffix='_raw_trees'):
-    raw_tree_suffix='_compressed_100'):
+    # raw_tree_suffix='_compressed_100'):
+    raw_tree_suffix='_graphs'):
   raw_tree_iterator = None
   for raw_sample in data_file.read_by_file_suffix():
     assert CODE_TOKENS_LABEL in raw_sample

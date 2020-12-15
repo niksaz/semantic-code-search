@@ -25,7 +25,8 @@ class PretrainedNBoWEncoder(MaskedSeqEncoder):
         return self.get_hyper('token_embedding_size')
 
     def pretrained_embedding_layer(self, token_inp: tf.Tensor) -> tf.Tensor:
-        embedding_path = '/home/zerogerc/msazanovich/CodeSearchNet/resources/embeddings/_compressed_100/embeddings.npy'
+        resource = '_graphs'
+        embedding_path = f'/home/zerogerc/msazanovich/CodeSearchNet/resources/embeddings/{resource}/embeddings.npy'
         embedding = np.load(embedding_path)
         N, K = embedding.shape
         # Add a zero embedding for the UNK token.
