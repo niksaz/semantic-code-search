@@ -111,13 +111,6 @@ class ASTNNEncoder(ASTEncoder):
                               data_to_load: Any, function_name: Optional[str], result_holder: Dict[str, Any],
                               is_test: bool = True) -> bool:
         nodes, children = _linearize_and_split_tree_bfs(data_to_load, hyperparameters[f'{encoder_label}_max_num_nodes'])
-        print('Tree is:')
-        print(np.array(nodes).shape)
-        print(nodes[0])
-        print(np.array(children).shape)
-        print(children[0])
-        print()
-        raise EOFError("Stop")
 
         def convert_and_pad(nodes_):
             n = len(nodes_)
