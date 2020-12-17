@@ -30,7 +30,17 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
         GraphEncoder.update_config(model_name)
         NeuralASTModel.MODEL_NAME = model_name
         return NeuralASTModel
+    elif model_name in ['great10', 'great10model']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name)
+        NeuralASTModel.MODEL_NAME = model_name
+        return NeuralASTModel
     elif model_name in ['transformer', 'transformermodel']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name)
+        NeuralASTModel.MODEL_NAME = model_name
+        return NeuralASTModel
+    elif model_name in ['transformer10', 'transformer10model']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
         GraphEncoder.update_config(model_name)
         NeuralASTModel.MODEL_NAME = model_name

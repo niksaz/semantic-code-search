@@ -33,8 +33,14 @@ class GraphEncoder(Encoder):
             cls.encoder_hypers['stack'] = ['transformer', 'ggnn', 'transformer', 'ggnn', 'transformer']
         elif mode in ['great', 'greatmodel']:
             cls.encoder_hypers['stack'] = ['great']
+        elif mode in ['great10', 'great10model']:
+            cls.encoder_hypers['stack'] = ['great']
+            great_transformer_network.Transformer.default_config['num_layers'] = 10
         elif mode in ['transformer', 'transformermodel']:
             cls.encoder_hypers['stack'] = ['transformer']
+        elif mode in ['transformer10', 'transformer10model']:
+            cls.encoder_hypers['stack'] = ['transformer']
+            great_transformer_network.Transformer.default_config['num_layers'] = 10
         else:
             raise ValueError(f"Tried to update graph config with {mode}")
 
@@ -129,7 +135,7 @@ class GraphEncoder(Encoder):
                                                      sequence_lengths=node_token_lens,
                                                      sequence_token_masks=node_token_masks)
 
-        return graph_encoding + token_encoding
+        return graph_encoding
         # return token_encoding
 
     @classmethod
