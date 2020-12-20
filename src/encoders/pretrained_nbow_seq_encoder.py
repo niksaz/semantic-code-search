@@ -36,7 +36,7 @@ class PretrainedNBoWEncoder(MaskedSeqEncoder):
             name="token_embeddings",
             shape=embedding.shape,
             initializer=tf.constant_initializer(embedding),
-            trainable=False)
+            trainable=True)  # trainable=False
         self.__embeddings = token_embeddings
         token_embeddings = tf.nn.dropout(token_embeddings, keep_prob=self.placeholders['dropout_keep_rate'])
         return tf.nn.embedding_lookup(params=token_embeddings, ids=token_inp)
