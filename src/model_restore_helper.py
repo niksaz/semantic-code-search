@@ -10,40 +10,51 @@ from models import Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentio
 
 def get_model_class_from_name(model_name: str) -> Type[Model]:
     model_name = model_name.lower()
+    is_plain = False
+    raw_model_name = model_name
+    if model_name.endswith('-plain'):
+        is_plain = True
+        model_name = model_name[:-len('-plain')]
+
     if model_name in ['ggnn', 'ggnnmodel']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
-        GraphEncoder.update_config(model_name)
-        NeuralASTModel.MODEL_NAME = model_name
+        GraphEncoder.update_config(model_name, is_plain)
+        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['rnn-ggnn-sandwich']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
-        GraphEncoder.update_config(model_name)
-        NeuralASTModel.MODEL_NAME = model_name
+        GraphEncoder.update_config(model_name, is_plain)
+        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['transformer-ggnn-sandwich']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
-        GraphEncoder.update_config(model_name)
-        NeuralASTModel.MODEL_NAME = model_name
+        GraphEncoder.update_config(model_name, is_plain)
+        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['great', 'greatmodel']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
-        GraphEncoder.update_config(model_name)
-        NeuralASTModel.MODEL_NAME = model_name
+        GraphEncoder.update_config(model_name, is_plain)
+        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['great10', 'great10model']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
-        GraphEncoder.update_config(model_name)
-        NeuralASTModel.MODEL_NAME = model_name
+        GraphEncoder.update_config(model_name, is_plain)
+        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['transformer', 'transformermodel']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
-        GraphEncoder.update_config(model_name)
-        NeuralASTModel.MODEL_NAME = model_name
+        GraphEncoder.update_config(model_name, is_plain)
+        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['transformer10', 'transformer10model']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
-        GraphEncoder.update_config(model_name)
-        NeuralASTModel.MODEL_NAME = model_name
+        GraphEncoder.update_config(model_name, is_plain)
+        NeuralASTModel.MODEL_NAME = raw_model_name
+        return NeuralASTModel
+    elif model_name in ['graphnbow', 'graphnbowmodel']:
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name, False)
+        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['neuralast', 'neuralastmodel']:
         CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder

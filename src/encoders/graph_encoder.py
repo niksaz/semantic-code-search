@@ -19,12 +19,14 @@ class GraphEncoder(Encoder):
         'token_embedding_size': 128,
         'token_use_bpe': True,
         'token_pct_bpe': 0.5,
-        'max_num_tokens': 200,
+        'max_num_tokens': 300,
         'stack': [],
+        'is_plain': False
     }
 
     @classmethod
-    def update_config(cls, mode: str):
+    def update_config(cls, mode: str, is_plain: bool):
+        cls.encoder_hypers['is_plain'] = is_plain
         if mode in ['ggnn', 'ggnnmodel']:
             cls.encoder_hypers['stack'] = ['ggnn-pure']
         elif mode in ['rnn-ggnn-sandwich']:
@@ -41,6 +43,8 @@ class GraphEncoder(Encoder):
         elif mode in ['transformer10', 'transformer10model']:
             cls.encoder_hypers['stack'] = ['transformer']
             great_transformer_network.Transformer.default_config['num_layers'] = 10
+        elif mode in ['graphnbow', 'graphnbowmodel']:
+            cls.encoder_hypers['stack'] = []
         else:
             raise ValueError(f"Tried to update graph config with {mode}")
 
@@ -81,6 +85,8 @@ class GraphEncoder(Encoder):
 
     def _build_stack(self, states, is_train: bool):
         stack = self.get_hyper('stack')
+        if len(stack) == 0:
+            return None
         if stack[0] != 'rnn':
             pos_enc = util.positional_encoding(self.get_hyper('token_embedding_size'), 5000)
             states += pos_enc[:tf.shape(states)[1]]
@@ -128,15 +134,19 @@ class GraphEncoder(Encoder):
 
             node_encodings = self._build_stack(node_tokens, is_train)
 
-            print('node encoding', node_encodings.shape)
+            if node_encodings is not None:
+                print('node encoding', node_encodings.shape)
+                graph_encoding = pool_sequence_embedding('mean',
+                                                         sequence_token_embeddings=node_tokens,
+                                                         sequence_lengths=node_token_lens,
+                                                         sequence_token_masks=node_token_masks)
 
-            graph_encoding = pool_sequence_embedding('mean',
-                                                     sequence_token_embeddings=node_tokens,
-                                                     sequence_lengths=node_token_lens,
-                                                     sequence_token_masks=node_token_masks)
+        if node_encodings is None:
+            return token_encoding
+        if self.get_hyper('is_plain'):
+            return graph_encoding
 
-        return graph_encoding
-        # return token_encoding
+        return token_encoding + graph_encoding
 
     @classmethod
     def init_metadata(cls) -> Dict[str, Any]:
