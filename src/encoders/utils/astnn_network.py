@@ -10,7 +10,7 @@ def init_net(nodes, children, feature_size, encoder_size):
         enc = encoder_layer(nodes, children, feature_size, encoder_size)
 
         # (batch_size x split_size x feature_size)
-        gru_out = bigru_layer(enc, encoder_size, feature_size, 1)
+        gru_out = bigru_layer(enc, encoder_size)
         # (batch_size x feature_size x split_size)
         gru_out = tf.transpose(gru_out, perm=[0, 2, 1])
 
@@ -23,9 +23,9 @@ def init_net(nodes, children, feature_size, encoder_size):
         tf.summary.scalar('tree_size', tf.shape(nodes)[2])
         tf.summary.scalar('child_size', tf.shape(children)[3])
         tf.summary.histogram('logits', hidden)
-        tf.summary.image('inputs', tf.expand_dims(nodes, axis=4))
-        tf.summary.image('enc', tf.expand_dims(enc, axis=4))
-        tf.summary.image('bigru', tf.expand_dims(gru_out, axis=4))
+        tf.summary.image('inputs', tf.expand_dims(nodes, axis=3))
+        tf.summary.image('enc', tf.expand_dims(enc, axis=3))
+        tf.summary.image('bigru', tf.expand_dims(gru_out, axis=3))
 
     return hidden
 
@@ -51,7 +51,7 @@ def encoder_layer(nodes, children, features_size, encoder_size):
     with tf.name_scope('encoder_layer'):
         with tf.name_scope('encoder_layer'):
             batch_size = tf.shape(nodes)[0]
-            nodes_size = tf.shape(nodes)[2]
+            nodes_size = nodes.get_shape().as_list()[2]
             children_size = tf.shape(children)[3]
             split_nodes = tf.reshape(nodes, (-1, nodes_size, features_size))
             split_children = tf.reshape(children, (-1, nodes_size, children_size))
@@ -72,6 +72,7 @@ def encoder_layer(nodes, children, features_size, encoder_size):
 
 def traverse_mul(nodes, children, node_list, features_size, encoder_size):
     with tf.name_scope('split_encoder_node'):
+        batch_size = tf.shape(nodes)[0]
         nodes_size = nodes.get_shape().as_list()[1]
         # (batch_size x num_nodes x encoder_size)
         encoded_nodes = W_c(nodes, features_size, encoder_size)
@@ -85,18 +86,16 @@ def traverse_mul(nodes, children, node_list, features_size, encoder_size):
             # (batch_size x encoder_size)
             new_node_vector = current_nodes + children_sum
 
-            encoded_nodes = tf.concat([
-                encoded_nodes[:, :j, :],
-                tf.expand_dims(new_node_vector, axis=1),
-                encoded_nodes[:, j+1:, :]],
-                axis=1)
+            update_indices = tf.concat([tf.reshape(tf.range(batch_size), (-1, 1)), tf.fill([batch_size, 1], j)], axis=1)
+            encoded_nodes = tf.tensor_scatter_nd_update(encoded_nodes, update_indices, new_node_vector)
+
             node_list.append(new_node_vector)
 
 
 def children_tensor(nodes, children, num_node, encoder_size):
     with tf.name_scope('sum_children'):
-        batch_size = nodes.get_shape().as_list()[0]
-        zero_vecs = tf.zeros((batch_size, 1, encoder_size), tf.int32)
+        batch_size = tf.shape(nodes)[0]
+        zero_vecs = tf.zeros((batch_size, 1, encoder_size), tf.float32)
         # (batch_size x num_nodes x encoder_size)
         node_vectors = tf.concat([zero_vecs, nodes[:, 1:, :]], axis=1)
         # (batch_size x 2)
@@ -111,7 +110,7 @@ def children_tensor(nodes, children, num_node, encoder_size):
         children_indices = tf.reshape(children_indices, (batch_size, -1, 1))
         # (batch_size x num_children x 1)
         batch_indices = tf.tile(tf.reshape(tf.range(0, batch_size), (batch_size, 1, 1)), [1, children_size, 1],
-                                name='batch_indices').eval()
+                                name='batch_indices')
         # (batch_size x num_children x 2)
         children_indices = tf.concat([batch_indices, children_indices], axis=2, name='children_indices')
         # (batch_size x num_children x encoder_size)
@@ -139,20 +138,19 @@ def W_c(encoded, input_size, output_size):
         return tf.matmul(encoded, weights) + biases
 
 
-def pad_batch(node_type_ids, children):
+def pad_batch(node_type_ids, children, max_nodes):
     if not node_type_ids:
         return [], []
 
-    max_splits = max([len(b) for b in node_type_ids])
-    node_type_ids = [b + [[]] * (max_splits - len(b)) for b in node_type_ids]
+    max_splits_n = max([len(b) for b in node_type_ids])
+    node_type_ids = [b + [[]] * (max_splits_n - len(b)) for b in node_type_ids]
 
-    max_nodes = max([len(s) for b in node_type_ids for s in b])
     node_type_ids = [[s + [-1] * (max_nodes - len(s)) for s in b] for b in node_type_ids]
 
-    max_splits = max([len(b) for b in children])
-    children = [b + [[[]]] * (max_splits - len(b)) for b in children]
+    max_splits_c = max([len(b) for b in children])
+    assert max_splits_c == max_splits_n
+    children = [b + [[[]]] * (max_splits_c - len(b)) for b in children]
 
-    max_nodes = max([len(s) for b in children for s in b])
     children = [[s + [[]] * (max_nodes - len(s)) for s in b] for b in children]
 
     max_children = max([len(n) for b in children for s in b for n in s])

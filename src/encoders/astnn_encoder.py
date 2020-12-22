@@ -98,20 +98,19 @@ class ASTNNEncoder(ASTEncoder):
             nodes = self.embedding_layer(self.placeholders['node_type_ids'])
             children = self.placeholders['children']
             hidden = astnn_network.init_net(nodes, children, self.get_hyper('type_embedding_size'),
-                                            self.get_hyper('type_encoder_size'))
+                                            self.get_hyper('tree_encoder_size'))
         return hidden
 
     def _make_placeholders(self):
         super()._make_placeholders()
-        self.placeholders['node_type_ids'] = tf.placeholder(tf.int32, shape=[None, None, None], name='node_type_ids')
-        self.placeholders['children'] = tf.placeholder(tf.int32, shape=(None, None, None, None), name='children')
+        self.placeholders['node_type_ids'] = tf.placeholder(tf.int32, shape=[None, None, self.get_hyper('max_num_nodes')], name='node_type_ids')
+        self.placeholders['children'] = tf.placeholder(tf.int32, shape=(None, None, self.get_hyper('max_num_nodes'), None), name='children')
 
     @classmethod
     def load_data_from_sample(cls, encoder_label: str, hyperparameters: Dict[str, Any], metadata: Dict[str, Any],
                               data_to_load: Any, function_name: Optional[str], result_holder: Dict[str, Any],
                               is_test: bool = True) -> bool:
         nodes, children = _linearize_and_split_tree_bfs(data_to_load, hyperparameters[f'{encoder_label}_max_num_nodes'])
-
         def convert_and_pad(nodes_):
             n = len(nodes_)
             node_types = [node['type'] for node in nodes_]
@@ -133,6 +132,6 @@ class ASTNNEncoder(ASTEncoder):
         super().minibatch_to_feed_dict(batch_data, feed_dict, is_train)
         node_type_ids = batch_data['node_type_ids']
         children = batch_data['children']
-        node_type_ids, children = astnn_network.pad_batch(node_type_ids, children)
+        node_type_ids, children = astnn_network.pad_batch(node_type_ids, children, self.get_hyper('max_num_nodes'))
         tfutils.write_to_feed_dict(feed_dict, self.placeholders['node_type_ids'], node_type_ids)
         tfutils.write_to_feed_dict(feed_dict, self.placeholders['children'], children)

@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, Tuple, List
 
 import tensorflow as tf
 
-from . import Encoder, QueryType, NBoWEncoder, ASTNNEncoder
+from . import Encoder, QueryType, NBoWEncoder, ASTNNEncoder, TBCNNEncoder
 from utils import data_pipeline
 from .utils import tree_processing
 
@@ -65,7 +65,7 @@ class CodeTokensASTEncoder(Encoder):
       use_subtokens,
       mark_subtoken_end)
     cls.AST_ENCODER_CLASS.load_metadata_from_sample(
-      tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      data_to_load[data_pipeline.RAW_TREE_LABEL],
       raw_metadata[cls.AST_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -108,7 +108,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.AST_ENCODER_LABEL],
-      tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      data_to_load[data_pipeline.RAW_TREE_LABEL],
       function_name,
       result_holder[cls.AST_ENCODER_LABEL],
       is_test)
