@@ -49,9 +49,9 @@ The row order corresponds to the result ranking in the search task. For example,
 """
 
 import pickle
-import re
 import shutil
 import sys
+import gc
 
 from annoy import AnnoyIndex
 from docopt import docopt
@@ -61,8 +61,11 @@ from tqdm import tqdm
 import wandb
 from wandb.apis import InternalApi
 
-from dataextraction.python.parse_python_data import tokenize_docstring_from_string
 import model_restore_helper
+import models
+from dataextraction.python.parse_python_data import tokenize_docstring_from_string
+from utils import data_pipeline
+
 
 def query_model(query, model, indices, language, topk=100):
     query_embedding = model.get_query_representations([{'docstring_tokens': tokenize_docstring_from_string(query),
@@ -113,21 +116,55 @@ if __name__ == '__main__':
         hyper_overrides={})
     
     predictions = []
-    for language in ('python', 'go', 'javascript', 'java', 'php', 'ruby'):
+    for language in ('python', ):
         print("Evaluating language: %s" % language)
-        definitions = pickle.load(open('../resources/data/{}_dedupe_definitions_v2.pkl'.format(language), 'rb'))
-        indexes = [{'code_tokens': d['function_tokens'], 'language': d['language']} for d in tqdm(definitions)]
-        code_representations = model.get_code_representations(indexes)
 
-        indices = AnnoyIndex(code_representations[0].shape[0], 'angular')
-        for index, vector in tqdm(enumerate(code_representations)):
+        definitions = pickle.load(open('../resources/data/{}_dedupe_definitions_v2.pkl'.format(language), 'rb'))
+        url_to_id = {d['url']: d['identifier'] for d in tqdm(definitions)}
+        print('len(definitions)', len(definitions))
+        print('len(url_to_id)', len(url_to_id))
+        del definitions
+        gc.collect()
+
+        data_dirs = [
+            RichPath.create('../resources/data/python/final/jsonl/train'),
+            RichPath.create('../resources/data/python/final/jsonl/valid'),
+            RichPath.create('../resources/data/python/final/jsonl/test'),
+        ]
+        data_files = sorted(models.model.get_data_files_from_directory(data_dirs, max_files_per_dir=None))
+        indexes = []
+        code_representations_all = []
+        for data_file in data_files:
+            samples = []
+            for data_sample in tqdm(data_pipeline.combined_samples_generator(data_file)):
+                sample = {}
+                index = {}
+                sample_only_keys = ['code_tokens', data_pipeline.RAW_TREE_LABEL]
+                sample_index_keys = ['language', 'url']
+                for key in sample_only_keys:
+                    sample[key] = data_sample[key]
+                for key in sample_index_keys:
+                    sample[key] = index[key] = data_sample[key]
+                samples.append(sample)
+                indexes.append(index)
+            data_file_code_representations = model.get_code_representations(samples)
+            code_representations_all.extend(data_file_code_representations)
+
+        print('len(indexes)', len(indexes))
+        print('len(code_representations_all)', len(code_representations_all))
+
+        indices = AnnoyIndex(code_representations_all[0].shape[0], 'angular')
+        for index, vector in tqdm(enumerate(code_representations_all)):
             if vector is not None:
                 indices.add_item(index, vector)
         indices.build(200)
+        print('Index is built')
 
         for query in queries:
             for idx, _ in zip(*query_model(query, model, indices, language)):
-                predictions.append((query, language, definitions[idx]['identifier'], definitions[idx]['url']))
+                index_url = indexes[idx]['url']
+                index_identifier = url_to_id[index_url]
+                predictions.append((query, language, index_identifier, index_url))
 
     df = pd.DataFrame(predictions, columns=['query', 'language', 'identifier', 'url'])
     df.to_csv(predictions_csv, index=False)
