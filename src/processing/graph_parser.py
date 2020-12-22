@@ -27,16 +27,16 @@ class GraphParser(CodeParser):
             graph = generator.build()
             return graph
         except (SyntaxError, UnicodeDecodeError) as e_initial:
-            self.skipped += 1
-            # try:
-            #     refactored_code = str(self.refactorer_2to3.refactor_string(code + '\n', 'python2_code'))
-            #     generator = AstGraphGenerator(refactored_code, self.lattice)
-            #     graph = generator.build()
-            #     return graph
-            # except (SyntaxError, UnicodeDecodeError) as e:
-            #     self.skipped += 1
-            # except Exception as e:
-            #     self.skipped += 1
+            # self.skipped += 1
+            try:
+                refactored_code = str(self.refactorer_2to3.refactor_string(code + '\n', 'python2_code'))
+                generator = AstGraphGenerator(refactored_code, self.lattice)
+                graph = generator.build()
+                return graph
+            except (SyntaxError, UnicodeDecodeError) as e:
+                self.skipped += 1
+            except Exception as e:
+                self.skipped += 1
         except Exception as e:
             self.failed += 1
         return {}
