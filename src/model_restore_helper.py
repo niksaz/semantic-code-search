@@ -63,7 +63,10 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
     elif model_name in ['neuralbow', 'neuralbowmodel']:
         return NeuralBoWModel
     elif model_name in ['rnn', 'rnnmodel']:
-        return RNNModel
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        GraphEncoder.update_config(model_name, False)
+        NeuralASTModel.MODEL_NAME = raw_model_name
+        return NeuralASTModel
     elif model_name in {'selfatt', 'selfattention', 'selfattentionmodel'}:
         return SelfAttentionModel
     elif model_name in {'1dcnn', 'convolutionalmodel'}:

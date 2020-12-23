@@ -83,8 +83,9 @@ def _drop_docstring_from_graph(graph: Dict[str, Any], docstring: str):
 DUMMY_GRAPH = {
     'nodes': ['DUMMY', 'DUMMY'],
     'edges': {
-        'CHILD': [(0, 1)]
-    }
+        'NEXT': [(0, 1)]
+    },
+    'sequence': ['DUMMY', 'DUMMY']
 }
 
 
@@ -102,7 +103,8 @@ def _extract_graph_data(graph: Dict[str, Any]) -> Dict[str, Any]:
                 for u in us
             ], dtype=np.int)
             for edge_type, edges_of_type in graph['edges'].items()
-        }
+        },
+        'sequence': [graph['nodes'][int(ind)] for ind in graph['token-sequence']]
     }
 
 
