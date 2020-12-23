@@ -124,17 +124,12 @@ class GraphEncoder(Encoder):
     def make_model(self, is_train: bool = False) -> tf.Tensor:
         with tf.variable_scope('graph_encoder'):
             self._make_placeholders()
-            seq_tokens = self.token_embedding_layer(self.placeholders['seq_token_ids'], suffix='_seq')
-            print('seq tokens', seq_tokens.shape)
-            seq_token_masks = self.placeholders['seq_masks']
-            print('seq token masks', seq_token_masks.shape)
-            seq_token_lens = tf.reduce_sum(seq_token_masks, axis=1)  # B
-            print('seq token lens', seq_token_lens.shape)
-            token_encoding = pool_sequence_embedding('mean',
-                                                     sequence_token_embeddings=seq_tokens,
-                                                     sequence_lengths=seq_token_lens,
-                                                     sequence_token_masks=seq_token_masks)
-            print('token encoding', token_encoding.shape)
+            # seq_tokens = self.token_embedding_layer(self.placeholders['seq_token_ids'], suffix='_seq')
+            # print('seq tokens', seq_tokens.shape)
+            # seq_token_masks = self.placeholders['seq_masks']
+            # print('seq token masks', seq_token_masks.shape)
+            # seq_token_lens = tf.reduce_sum(seq_token_masks, axis=1)  # B
+            # print('seq token lens', seq_token_lens.shape)
 
             node_tokens = self.token_embedding_layer(self.placeholders['node_token_ids'], suffix='_node')
             print('node tokens', node_tokens.shape)
@@ -142,23 +137,31 @@ class GraphEncoder(Encoder):
             print('node token masks', node_token_masks.shape)
             node_token_lens = tf.reduce_sum(node_token_masks, axis=1)  # B
 
-            # node_encodings = self._build_stack(node_tokens, is_train)
-            #
-            # if node_encodings is not None:
-            #     print('node encoding', node_encodings.shape)
-            #     graph_encoding = pool_sequence_embedding('mean',
-            #                                              sequence_token_embeddings=node_tokens,
-            #                                              sequence_lengths=node_token_lens,
-            #                                              sequence_token_masks=node_token_masks)
+            token_encoding = pool_sequence_embedding('mean',
+                                                     sequence_token_embeddings=node_tokens,
+                                                     sequence_lengths=node_token_lens,
+                                                     sequence_token_masks=node_token_masks)
 
-            node_encodings = self._build_stack(seq_tokens, is_train)
+            print('token encoding', token_encoding.shape)
+
+
+            node_encodings = self._build_stack(node_tokens, is_train)
 
             if node_encodings is not None:
                 print('node encoding', node_encodings.shape)
                 graph_encoding = pool_sequence_embedding('mean',
-                                                         sequence_token_embeddings=seq_tokens,
-                                                         sequence_lengths=seq_token_lens,
-                                                         sequence_token_masks=seq_token_masks)
+                                                         sequence_token_embeddings=node_tokens,
+                                                         sequence_lengths=node_token_lens,
+                                                         sequence_token_masks=node_token_masks)
+
+            # node_encodings = self._build_stack(seq_tokens, is_train)
+            #
+            # if node_encodings is not None:
+            #     print('node encoding', node_encodings.shape)
+            #     graph_encoding = pool_sequence_embedding('mean',
+            #                                              sequence_token_embeddings=seq_tokens,
+            #                                              sequence_lengths=seq_token_lens,
+            #                                              sequence_token_masks=seq_token_masks)
 
         if node_encodings is None:
             return token_encoding
