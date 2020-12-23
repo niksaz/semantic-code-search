@@ -126,6 +126,8 @@ def W_c(encoded, input_size, output_size):
             ),
             name='weights'
         )
+        batch_size = tf.shape(encoded)[0]
+        weights = tf.tile(tf.reshape(weights, [1, input_size, output_size]), [batch_size, 1, 1])
 
         init = tf.truncated_normal([output_size, ], stddev=math.sqrt(2.0 / input_size))
         # init = tf.zeros([output_size,])
