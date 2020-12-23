@@ -285,17 +285,20 @@ def out_layer(logits_node):
         return tf.nn.softmax(logits_node)
 
 
-def pad_batch(node_type_ids, children):
+def pad_batch(node_masks, node_token_ids, node_type_ids, children):
     if not node_type_ids:
-        return [], []
-    max_nodes = max([len(x) for x in node_type_ids])
+        return [], [], [], []
+    max_tokens = max([len(x) for x in node_masks])
+    node_masks = [n + [0] * (max_tokens - len(n)) for n in node_masks]
+    node_token_ids = [n + [-1] * (max_tokens - len(n)) for n in node_token_ids]
+
+    max_types = max([len(x) for x in node_type_ids])
+    node_type_ids = [n + [-1] * (max_types - len(n)) for n in node_type_ids]
+
+    # pad every child sample so every node has the same number of children
     max_children = max([len(x) for x in children])
     child_len = max([len(c) for n in children for c in n])
-
-    node_type_ids = [n + [-1] * (max_nodes - len(n)) for n in node_type_ids]
-    # pad batches so that every batch has the same number of nodes
     children = [n + ([[]] * (max_children - len(n))) for n in children]
-    # pad every child sample so every node has the same number of children
     children = [[c + [0] * (child_len - len(c)) for c in sample] for sample in children]
 
-    return node_type_ids, children
+    return node_masks, node_token_ids, node_type_ids, children

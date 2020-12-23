@@ -4,10 +4,11 @@ from typing import Dict, Any, Tuple, List, Optional
 import tensorflow as tf
 import numpy as np
 
-from .ast_encoder import ASTEncoder, _try_to_queue_node
+from .ast_encoder import ASTEncoder, _try_to_queue_node, _get_tree_elements_seq
 from .utils import astnn_network
 from utils import data_pipeline
 from utils import tfutils
+from utils.tfutils import pool_sequence_embedding
 
 
 STATEMENTS = ['function_definition', 'if_statement', 'while_statement', 'do_statement', 'switch_statement',
@@ -80,7 +81,7 @@ class ASTNNEncoder(ASTEncoder):
         encoder_hypers = {
             'tree_encoder_size': 128,
             # 'tree_hidden_size': 100
-            # we're considering that hidden_size = embedding_size // 2,
+            # we're considering that hidden_size = type_embedding_size // 2,
             # so that final representation size (after bigru) would be equal to embedding_size
         }
         hypers = super().get_default_hyperparameters()
@@ -91,18 +92,32 @@ class ASTNNEncoder(ASTEncoder):
         super().__init__(label, hyperparameters, metadata)
         assert label == 'code', 'ASTNNEncoder should only be used for code'
 
+    @property
+    def output_representation_size(self) -> int:
+        assert self.get_hyper('type_embedding_size') == self.get_hyper('token_embedding_size')
+        return self.get_hyper('token_embedding_size')
+
     def make_model(self, is_train: bool = False) -> tf.Tensor:
         with tf.variable_scope('astnn_encoder'):
             self._make_placeholders()
 
-            nodes = self.embedding_layer(self.placeholders['node_type_ids'])
+            node_tokens = self.token_embedding_layer(self.placeholders['node_token_ids'])
+            node_token_masks = self.placeholders['node_masks']
+            node_token_lens = tf.reduce_sum(node_token_masks, axis=1)  # B
+            token_encoding = pool_sequence_embedding('mean',
+                                                     sequence_token_embeddings=node_tokens,
+                                                     sequence_lengths=node_token_lens,
+                                                     sequence_token_masks=node_token_masks)
+            node_types = self.type_embedding_layer(self.placeholders['node_type_ids'])
             children = self.placeholders['children']
-            hidden = astnn_network.init_net(nodes, children, self.get_hyper('type_embedding_size'),
+            type_encoding = astnn_network.init_net(node_types, children, self.get_hyper('type_embedding_size'),
                                             self.get_hyper('tree_encoder_size'))
-        return hidden
+        return token_encoding + type_encoding
 
     def _make_placeholders(self):
         super()._make_placeholders()
+        self.placeholders['node_masks'] = tf.placeholder(tf.float32, shape=[None, None], name='node_masks')
+        self.placeholders['node_token_ids'] = tf.placeholder(tf.int32, shape=[None, None], name='node_token_ids')
         self.placeholders['node_type_ids'] = tf.placeholder(tf.int32, shape=[None, None, self.get_hyper('max_num_nodes')], name='node_type_ids')
         self.placeholders['children'] = tf.placeholder(tf.int32, shape=(None, None, self.get_hyper('max_num_nodes'), None), name='children')
 
@@ -110,7 +125,18 @@ class ASTNNEncoder(ASTEncoder):
     def load_data_from_sample(cls, encoder_label: str, hyperparameters: Dict[str, Any], metadata: Dict[str, Any],
                               data_to_load: Any, function_name: Optional[str], result_holder: Dict[str, Any],
                               is_test: bool = True) -> bool:
-        nodes, children = _linearize_and_split_tree_bfs(data_to_load, hyperparameters[f'{encoder_label}_max_num_nodes'])
+        _, node_tokens = _get_tree_elements_seq(data_to_load, hyperparameters[f'{encoder_label}_max_num_nodes'])
+        node_token_ids, mask = (
+            tfutils.convert_and_pad_token_sequence(
+                metadata['token_vocab'],
+                node_tokens,
+                hyperparameters[f'{encoder_label}_max_num_tokens']))
+        result_holder[f'{encoder_label}_node_masks'] = list(mask)
+        result_holder[f'{encoder_label}_node_token_ids'] = list(node_token_ids)
+
+        node_types, children = _linearize_and_split_tree_bfs(
+            data_to_load, hyperparameters[f'{encoder_label}_max_num_nodes']
+        )
         def convert_and_pad(nodes_):
             n = len(nodes_)
             node_types = [node['type'] for node in nodes_]
@@ -123,15 +149,21 @@ class ASTNNEncoder(ASTEncoder):
             assert np.all(mask == 1)
             return list(node_type_ids)
 
-        node_type_ids = [convert_and_pad(nodes_) for nodes_ in nodes]
+        node_type_ids = [convert_and_pad(nodes_) for nodes_ in node_types]
         result_holder[f'{encoder_label}_node_type_ids'] = list(node_type_ids)
         result_holder[f'{encoder_label}_children'] = children
         return True
 
     def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any], is_train: bool) -> None:
         super().minibatch_to_feed_dict(batch_data, feed_dict, is_train)
+        node_masks = batch_data['node_masks']
+        node_token_ids = batch_data['node_token_ids']
         node_type_ids = batch_data['node_type_ids']
         children = batch_data['children']
-        node_type_ids, children = astnn_network.pad_batch(node_type_ids, children, self.get_hyper('max_num_nodes'))
+        node_masks, node_token_ids, node_type_ids, children = astnn_network.pad_batch(
+            node_masks, node_token_ids, node_type_ids, children, self.get_hyper('max_num_nodes')
+        )
+        tfutils.write_to_feed_dict(feed_dict, self.placeholders['node_masks'], node_masks)
+        tfutils.write_to_feed_dict(feed_dict, self.placeholders['node_token_ids'], node_token_ids)
         tfutils.write_to_feed_dict(feed_dict, self.placeholders['node_type_ids'], node_type_ids)
         tfutils.write_to_feed_dict(feed_dict, self.placeholders['children'], children)

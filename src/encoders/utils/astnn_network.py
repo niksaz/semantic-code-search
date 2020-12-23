@@ -138,9 +138,13 @@ def W_c(encoded, input_size, output_size):
         return tf.matmul(encoded, weights) + biases
 
 
-def pad_batch(node_type_ids, children, max_nodes):
+def pad_batch(node_masks, node_token_ids, node_type_ids, children, max_nodes):
     if not node_type_ids:
-        return [], []
+        return [], [], [], []
+
+    max_tokens = max([len(x) for x in node_masks])
+    node_masks = [n + [0] * (max_tokens - len(n)) for n in node_masks]
+    node_token_ids = [n + [-1] * (max_tokens - len(n)) for n in node_token_ids]
 
     max_splits_n = max([len(b) for b in node_type_ids])
     node_type_ids = [b + [[]] * (max_splits_n - len(b)) for b in node_type_ids]
@@ -156,4 +160,4 @@ def pad_batch(node_type_ids, children, max_nodes):
     max_children = max([len(n) for b in children for s in b for n in s])
     children = [[[n + [0] * (max_children - len(n)) for n in s] for s in b] for b in children]
 
-    return node_type_ids, children
+    return node_masks, node_token_ids, node_type_ids, children
