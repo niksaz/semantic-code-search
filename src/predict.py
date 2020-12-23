@@ -51,7 +51,6 @@ The row order corresponds to the result ranking in the search task. For example,
 import pickle
 import shutil
 import sys
-import gc
 
 from annoy import AnnoyIndex
 from docopt import docopt
@@ -68,119 +67,107 @@ from utils import data_pipeline
 
 
 def query_model(query, model, indices, language, topk=100):
-    query_embedding = model.get_query_representations([{'docstring_tokens': tokenize_docstring_from_string(query),
-                                                        'language': language}])[0]
-    idxs, distances = indices.get_nns_by_vector(query_embedding, topk, include_distances=True)
-    return idxs, distances
+  query_embedding = model.get_query_representations([{'docstring_tokens': tokenize_docstring_from_string(query),
+                                                      'language': language}])[0]
+  idxs, distances = indices.get_nns_by_vector(query_embedding, topk, include_distances=True)
+  return idxs, distances
 
 
 if __name__ == '__main__':
-    args = docopt(__doc__)
-    
-    queries = pd.read_csv('../resources/queries.csv')
-    queries = list(queries['query'].values)
+  args = docopt(__doc__)
 
-    run_id = None
-    args_wandb_run_id = args.get('--wandb_run_id')
-    local_model_path = args.get('--model_file')
-    predictions_csv = args.get('--predictions_csv')
+  queries = pd.read_csv('../resources/queries.csv')
+  queries = list(queries['query'].values)
 
-    if args_wandb_run_id:
-        # validate format of runid:
-        if len(args_wandb_run_id.split('/')) != 3:
-            print("ERROR: Invalid wandb_run_id format: %s (Expecting: user/project/hash)" % args_wandb_run_id, file=sys.stderr)
-            sys.exit(1)
-        wandb_api = wandb.Api()
-        # retrieve saved model from W&B for this run
-        print("Fetching run from W&B...")
-        try:
-            run = wandb_api.run(args_wandb_run_id)
-        except wandb.CommError as e:
-            print("ERROR: Problem querying W&B for wandb_run_id: %s" % args_wandb_run_id, file=sys.stderr)
-            sys.exit(1)
+  run_id = None
+  args_wandb_run_id = args.get('--wandb_run_id')
+  local_model_path = args.get('--model_file')
+  predictions_csv = args.get('--predictions_csv')
 
-        print("Fetching run files from W&B...")
-        gz_run_files = [f for f in run.files() if f.name.endswith('gz')]
-        if not gz_run_files:
-            print("ERROR: Run contains no model-like files")
-            sys.exit(1)
-        model_file = gz_run_files[0].download(replace=True)
-        local_model_path = model_file.name
-        run_id = args_wandb_run_id.split('/')[-1]
+  if args_wandb_run_id:
+    # validate format of runid:
+    if len(args_wandb_run_id.split('/')) != 3:
+      print("ERROR: Invalid wandb_run_id format: %s (Expecting: user/project/hash)" % args_wandb_run_id,
+            file=sys.stderr)
+      sys.exit(1)
+    wandb_api = wandb.Api()
+    # retrieve saved model from W&B for this run
+    print("Fetching run from W&B...")
+    try:
+      run = wandb_api.run(args_wandb_run_id)
+    except wandb.CommError as e:
+      print("ERROR: Problem querying W&B for wandb_run_id: %s" % args_wandb_run_id, file=sys.stderr)
+      sys.exit(1)
 
-    model_path = RichPath.create(local_model_path, None)
-    print("Restoring model from %s" % model_path)
-    model = model_restore_helper.restore(
-        path=model_path,
-        is_train=False,
-        hyper_overrides={})
-    
-    predictions = []
-    for language in ('python', ):
-        print("Evaluating language: %s" % language)
+    print("Fetching run files from W&B...")
+    gz_run_files = [f for f in run.files() if f.name.endswith('gz')]
+    if not gz_run_files:
+      print("ERROR: Run contains no model-like files")
+      sys.exit(1)
+    model_file = gz_run_files[0].download(replace=True)
+    local_model_path = model_file.name
+    run_id = args_wandb_run_id.split('/')[-1]
 
-        definitions = pickle.load(open('../resources/data/{}_dedupe_definitions_v2.pkl'.format(language), 'rb'))
-        url_to_id = {d['url']: d['identifier'] for d in tqdm(definitions)}
-        print('len(definitions)', len(definitions))
-        print('len(url_to_id)', len(url_to_id))
-        del definitions
-        gc.collect()
+  model_path = RichPath.create(local_model_path, None)
+  print("Restoring model from %s" % model_path)
+  model = model_restore_helper.restore(
+    path=model_path,
+    is_train=False,
+    hyper_overrides={})
 
-        data_dirs = [
-            RichPath.create('../resources/data/python/final/jsonl/train'),
-            RichPath.create('../resources/data/python/final/jsonl/valid'),
-            RichPath.create('../resources/data/python/final/jsonl/test'),
-        ]
-        data_files = sorted(models.model.get_data_files_from_directory(data_dirs, max_files_per_dir=None))
-        indexes = []
-        code_representations_all = []
-        for data_file in data_files:
-            samples = []
-            for data_sample in tqdm(data_pipeline.combined_samples_generator(data_file)):
-                sample = {}
-                index = {}
-                sample_only_keys = ['code_tokens', data_pipeline.RAW_TREE_LABEL]
-                sample_index_keys = ['language', 'url']
-                for key in sample_only_keys:
-                    sample[key] = data_sample[key]
-                for key in sample_index_keys:
-                    sample[key] = index[key] = data_sample[key]
-                samples.append(sample)
-                indexes.append(index)
-            data_file_code_representations = model.get_code_representations(samples)
-            code_representations_all.extend(data_file_code_representations)
+  predictions = []
+  for language in ('python',):
+    print("Evaluating language: %s" % language)
 
-        print('len(indexes)', len(indexes))
-        print('len(code_representations_all)', len(code_representations_all))
+    definitions = pickle.load(open('../resources/data/{}_dedupe_definitions_v2.pkl'.format(language), 'rb'))
+    print('len(definitions)', len(definitions))
 
-        indices = AnnoyIndex(code_representations_all[0].shape[0], 'angular')
-        for index, vector in tqdm(enumerate(code_representations_all)):
-            if vector is not None:
-                indices.add_item(index, vector)
-        indices.build(200)
-        print('Index is built')
+    data_dirs = [
+      RichPath.create('../resources/data/graph_definitions'),
+    ]
+    data_files = sorted(models.model.get_data_files_from_directory(data_dirs, max_files_per_dir=None))
+    definitions_index = 0
+    code_representations_all = []
+    for data_file in data_files:
+      samples = []
+      for data_sample in tqdm(data_pipeline.combined_samples_generator(data_file)):
+        sample = {
+          'code_tokens': definitions[definitions_index]['function_tokens'],
+          data_pipeline.RAW_TREE_LABEL: data_sample[data_pipeline.RAW_TREE_LABEL],
+          'language': definitions[definitions_index]['language'],
+        }
+        samples.append(sample)
+        definitions_index += 1
+      data_file_code_representations = model.get_code_representations(samples)
+      code_representations_all.extend(data_file_code_representations)
 
-        for query in queries:
-            for idx, _ in zip(*query_model(query, model, indices, language)):
-                index_url = indexes[idx]['url']
-                index_identifier = url_to_id[index_url]
-                predictions.append((query, language, index_identifier, index_url))
+    print('len(code_representations_all)', len(code_representations_all))
 
-    df = pd.DataFrame(predictions, columns=['query', 'language', 'identifier', 'url'])
-    df.to_csv(predictions_csv, index=False)
+    indices = AnnoyIndex(code_representations_all[0].shape[0], 'angular')
+    for index, vector in tqdm(enumerate(code_representations_all)):
+      if vector is not None:
+        indices.add_item(index, vector)
+    indices.build(200)
+    print('Index is built')
 
+    for query in queries:
+      for idx, _ in zip(*query_model(query, model, indices, language)):
+        predictions.append((query, language, definitions[idx]['identifier'], definitions[idx]['url']))
 
-    if run_id:
-        print('Uploading predictions to W&B')
-        # upload model predictions CSV file to W&B
+  df = pd.DataFrame(predictions, columns=['query', 'language', 'identifier', 'url'])
+  df.to_csv(predictions_csv, index=False)
 
-        # we checked that there are three path components above
-        entity, project, name = args_wandb_run_id.split('/')
+  if run_id:
+    print('Uploading predictions to W&B')
+    # upload model predictions CSV file to W&B
 
-        # make sure the file is in our cwd, with the correct name
-        predictions_base_csv = "model_predictions.csv"
-        shutil.copyfile(predictions_csv, predictions_base_csv)
+    # we checked that there are three path components above
+    entity, project, name = args_wandb_run_id.split('/')
 
-        # Using internal wandb API. TODO: Update when available as a public API
-        internal_api = InternalApi()
-        internal_api.push([predictions_base_csv], run=name, entity=entity, project=project)
+    # make sure the file is in our cwd, with the correct name
+    predictions_base_csv = "model_predictions.csv"
+    shutil.copyfile(predictions_csv, predictions_base_csv)
+
+    # Using internal wandb API. TODO: Update when available as a public API
+    internal_api = InternalApi()
+    internal_api.push([predictions_base_csv], run=name, entity=entity, project=project)
