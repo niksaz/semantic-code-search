@@ -22,7 +22,8 @@ class DataPreprocessor:
 
   @staticmethod
   def extract_ast_data(data_to_load):
-    return tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.TREE_LABEL])
+    return get_graph_nodes(data_to_load[data_pipeline.GRAPH_LABEL])
+    # return tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.TREE_LABEL])
 
 
 class CodeTokensASTEncoder(Encoder):

@@ -17,7 +17,8 @@ class PretrainedNBoWEncoder(MaskedSeqEncoder):
     def get_default_hyperparameters(cls) -> Dict[str, Any]:
         encoder_hypers = {
             'nbow_pool_mode': 'weighted_mean',
-            'resource': '_raw_trees'
+            'resource': '_graphs',
+            # 'resource': '_raw_trees',
         }
         hypers = super().get_default_hyperparameters()
         hypers.update(encoder_hypers)
