@@ -12,11 +12,11 @@ Options:
     -m, --model_file FILENAME       Local path to a saved model file (filename.pkl.gz)
     -r, --wandb_run_id RUN_ID       wandb run ID, [username]/codesearchnet/[hash string id], viewable from run overview page via info icon
     -p, --predictions_csv FILENAME  CSV filename for model predictions (note: W&B benchmark submission requires the default name)
-                                    [default: ../resources/model_predictions.csv]
+                                    [default: resources/model_predictions.csv]
 
 Examples:
     ./predict.py -r username/codesearchnet/0123456
-    ./predict.py -m ../resources/saved_models/neuralbowmodel-2019-10-31-12-00-00_model_best.pkl.gz
+    ./predict.py -m resources/saved_models/neuralbowmodel-2019-10-31-12-00-00_model_best.pkl.gz
 """
 
 """
@@ -76,7 +76,7 @@ def query_model(query, model, indices, language, topk=100):
 if __name__ == '__main__':
   args = docopt(__doc__)
 
-  queries = pd.read_csv('../resources/queries.csv')
+  queries = pd.read_csv('resources/queries.csv')
   queries = list(queries['query'].values)
 
   run_id = None
@@ -119,11 +119,11 @@ if __name__ == '__main__':
   for language in ('python',):
     print("Evaluating language: %s" % language)
 
-    definitions = pickle.load(open('../resources/data/{}_dedupe_definitions_v2.pkl'.format(language), 'rb'))
+    definitions = pickle.load(open('resources/data/{}_dedupe_definitions_v2.pkl'.format(language), 'rb'))
     print('len(definitions)', len(definitions))
 
-    ast_dirs = [RichPath.create('../resources/data/ast_definitions')]
-    graph_dirs = [RichPath.create('../resources/data/graph_definitions')]
+    ast_dirs = [RichPath.create('resources/data/ast_definitions')]
+    graph_dirs = [RichPath.create('resources/data/graph_definitions')]
     ast_files = sorted(models.model.get_data_files_from_directory(ast_dirs, max_files_per_dir=None))
     graph_files = sorted(models.model.get_data_files_from_directory(graph_dirs, max_files_per_dir=None))
     definitions_index = 0
