@@ -122,20 +122,25 @@ if __name__ == '__main__':
     definitions = pickle.load(open('../resources/data/{}_dedupe_definitions_v2.pkl'.format(language), 'rb'))
     print('len(definitions)', len(definitions))
 
-    data_dirs = [
-      RichPath.create('../resources/data/graph_definitions'),
-    ]
-    data_files = sorted(models.model.get_data_files_from_directory(data_dirs, max_files_per_dir=None))
+    ast_dirs = [RichPath.create('../resources/data/ast_definitions')]
+    graph_dirs = [RichPath.create('../resources/data/graph_definitions')]
+    ast_files = sorted(models.model.get_data_files_from_directory(ast_dirs, max_files_per_dir=None))
+    graph_files = sorted(models.model.get_data_files_from_directory(graph_dirs, max_files_per_dir=None))
     definitions_index = 0
     code_representations_all = []
-    for data_file in data_files:
+    for ast_file, graph_file in zip(ast_files, graph_files):
+      resource_mapping = {
+        data_pipeline.TREE_LABEL: ast_file,
+        data_pipeline.GRAPH_LABEL: graph_file,
+      }
       samples = []
-      for data_sample in tqdm(data_pipeline.combined_samples_generator(data_file)):
+      for loaded_sample in tqdm(data_pipeline.combined_samples_generator(resource_mapping)):
         sample = {
           'code_tokens': definitions[definitions_index]['function_tokens'],
-          data_pipeline.RAW_TREE_LABEL: data_sample[data_pipeline.RAW_TREE_LABEL],
           'language': definitions[definitions_index]['language'],
         }
+        for resource in resource_mapping.keys():
+          sample[resource] = loaded_sample[resource]
         samples.append(sample)
         definitions_index += 1
       data_file_code_representations = model.get_code_representations(samples)
