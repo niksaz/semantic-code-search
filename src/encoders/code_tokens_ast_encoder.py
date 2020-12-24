@@ -3,9 +3,9 @@ from typing import Any, Dict, Optional, Tuple, List
 
 import tensorflow as tf
 
-from . import Encoder, QueryType, NBoWEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, TBCNNEncoder
-from utils import data_pipeline
 from encoders.utils import tree_processing
+from utils import data_pipeline
+from . import Encoder, QueryType, NBoWEncoder
 
 
 def get_graph_nodes(graph: collections.OrderedDict) -> List[str]:
@@ -16,31 +16,38 @@ def get_graph_nodes(graph: collections.OrderedDict) -> List[str]:
 
 
 class DataPreprocessor:
-  @staticmethod
-  def extract_code_data(data_to_load):
+  @classmethod
+  def extract_code_data(cls, data_to_load):
     return data_to_load[data_pipeline.CODE_TOKENS_LABEL]
 
-  @staticmethod
-  def extract_ast_data(data_to_load):
-    # node2vec [Graphs]
+  @classmethod
+  def extract_ast_data(cls, data_to_load):
+    raise NotImplementedError("Data preprocessors should declare preprocessing for the ast encoder.")
+
+
+class GraphNodesDataPreprocessor(DataPreprocessor):
+  @classmethod
+  def extract_ast_data(cls, data_to_load):
     return get_graph_nodes(data_to_load[data_pipeline.GRAPH_LABEL])
-    # NBOW+Types [AST]
-    # node2vec [AST]
-    # return tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.TREE_LABEL])
-    # TBCNN [AST]
-    # return data_to_load[data_pipeline.TREE_LABEL]
+
+
+class ASTTypeBagDataPreprocessor(DataPreprocessor):
+  @classmethod
+  def extract_ast_data(cls, data_to_load):
+    return tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.TREE_LABEL])
+
+
+class TreeDataPreprocessor(DataPreprocessor):
+  @classmethod
+  def extract_ast_data(cls, data_to_load):
+    return data_to_load[data_pipeline.TREE_LABEL]
 
 
 class CodeTokensASTEncoder(Encoder):
   CODE_ENCODER_CLASS = NBoWEncoder
-  # node2vec [Graphs]
-  AST_ENCODER_CLASS = GraphPretrainedNBoWEncoder
-  # NBOW+Types [AST]
-  # AST_ENCODER_CLASS = NBoWEncoder
-  # node2vec [AST]
-  # AST_ENCODER_CLASS = ASTPretrainedNBoWEncoder
-  # TBCNN [AST]
-  # AST_ENCODER_CLASS = TBCNNEncoder
+  AST_ENCODER_CLASS = None
+  DATA_PREPROCESSOR = None
+
   CODE_ENCODER_LABEL = 'code_encoder'
   AST_ENCODER_LABEL = 'ast_encoder'
 
@@ -91,12 +98,12 @@ class CodeTokensASTEncoder(Encoder):
   def load_metadata_from_sample(cls, data_to_load: Any, raw_metadata: Dict[str, Any],
                                 use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
     cls.CODE_ENCODER_CLASS.load_metadata_from_sample(
-      DataPreprocessor.extract_code_data(data_to_load),
+      cls.DATA_PREPROCESSOR.extract_code_data(data_to_load),
       raw_metadata[cls.CODE_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
     cls.AST_ENCODER_CLASS.load_metadata_from_sample(
-      DataPreprocessor.extract_ast_data(data_to_load),
+      cls.DATA_PREPROCESSOR.extract_ast_data(data_to_load),
       raw_metadata[cls.AST_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -129,7 +136,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.CODE_ENCODER_LABEL],
-      DataPreprocessor.extract_code_data(data_to_load),
+      cls.DATA_PREPROCESSOR.extract_code_data(data_to_load),
       function_name,
       result_holder[cls.CODE_ENCODER_LABEL],
       is_test)
@@ -139,7 +146,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.AST_ENCODER_LABEL],
-      DataPreprocessor.extract_ast_data(data_to_load),
+      cls.DATA_PREPROCESSOR.extract_ast_data(data_to_load),
       function_name,
       result_holder[cls.AST_ENCODER_LABEL],
       is_test)

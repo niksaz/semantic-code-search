@@ -3,14 +3,36 @@ from typing import Dict, Any, Optional, Type
 import tensorflow as tf
 from dpu_utils.utils import RichPath
 
-from models import Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
+from encoders import \
+    CodeTokensASTEncoder, NBoWEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, TBCNNEncoder, \
+    GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor
+from models import \
+    Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
 
 
 def get_model_class_from_name(model_name: str) -> Type[Model]:
     model_name = model_name.lower()
-    if model_name in ['neuralast', 'neuralastmodel']:
+    if model_name == 'nbowtypesast':
+        NeuralASTModel.MODEL_NAME = model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = NBoWEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = ASTTypeBagDataPreprocessor
         return NeuralASTModel
-    if model_name in ['neuralbow', 'neuralbowmodel']:
+    elif model_name == 'node2vecast':
+        NeuralASTModel.MODEL_NAME = model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = ASTPretrainedNBoWEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = ASTTypeBagDataPreprocessor
+        return NeuralASTModel
+    elif model_name == 'tbcnnast':
+        NeuralASTModel.MODEL_NAME = model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeDataPreprocessor
+        return NeuralASTModel
+    elif model_name == 'node2vecgraphs':
+        NeuralASTModel.MODEL_NAME = model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphPretrainedNBoWEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = GraphNodesDataPreprocessor
+        return NeuralASTModel
+    elif model_name in ['neuralbow', 'neuralbowmodel']:
         return NeuralBoWModel
     elif model_name in ['rnn', 'rnnmodel']:
         return RNNModel
