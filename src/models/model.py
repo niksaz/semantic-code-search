@@ -1,5 +1,4 @@
 import os
-import itertools
 import multiprocessing
 import random
 import time
@@ -13,6 +12,7 @@ import wandb
 import tensorflow as tf
 from dpu_utils.utils import RichPath
 
+from utils import data_pipeline
 from utils.py_utils import run_jobs_in_parallel
 from encoders import Encoder, QueryType
 
@@ -47,30 +47,32 @@ def parse_data_file(hyperparameters: Dict[str, Any],
                     is_test: bool,
                     data_file: RichPath) -> Dict[str, List[Tuple[bool, Dict[str, Any]]]]:
     results: DefaultDict[str, List] = defaultdict(list)
-    for raw_sample in data_file.read_by_file_suffix():
+    for data_sample in data_pipeline.combined_samples_generator(data_file):
         sample: Dict = {}
-        language = raw_sample['language']
+        language = data_sample['language']
         if language.startswith('python'):  # In some datasets, we use 'python-2.7' and 'python-3'
             language = 'python'
 
         # the load_data_from_sample method call places processed data into sample, and
         # returns a boolean flag indicating if sample should be used
-        function_name = raw_sample.get('func_name')
-        use_code_flag = code_encoder_class.load_data_from_sample("code",
-                                                                 hyperparameters,
-                                                                 per_code_language_metadata[language],
-                                                                 raw_sample['code_tokens'],
-                                                                 function_name,
-                                                                 sample,
-                                                                 is_test)
+        function_name = data_sample.get('func_name')
+        use_code_flag = code_encoder_class.load_data_from_sample(
+            "code",
+             hyperparameters,
+             per_code_language_metadata[language],
+             data_sample,
+             function_name,
+             sample,
+             is_test)
 
-        use_query_flag = query_encoder_class.load_data_from_sample("query",
-                                                                   hyperparameters,
-                                                                   query_metadata,
-                                                                   [d.lower() for d in raw_sample['docstring_tokens']],
-                                                                   function_name,
-                                                                   sample,
-                                                                   is_test)
+        use_query_flag = query_encoder_class.load_data_from_sample(
+            "query",
+            hyperparameters,
+            query_metadata,
+            [d.lower() for d in data_sample['docstring_tokens']],
+            function_name,
+            sample,
+            is_test)
         use_example = use_code_flag and use_query_flag
         results[language].append((use_example, sample))
     return results
@@ -399,13 +401,13 @@ class Model(ABC):
             raw_query_metadata = self.__query_encoder_type.init_metadata()
             per_code_language_metadata: DefaultDict[str, Dict[str, Any]] = defaultdict(self.__code_encoder_type.init_metadata)
 
-            for raw_sample in file_path.read_by_file_suffix():
-                sample_language = raw_sample['language']
-                self.__code_encoder_type.load_metadata_from_sample(raw_sample['code_tokens'],
+            for data_sample in data_pipeline.combined_samples_generator(file_path):
+                sample_language = data_sample['language']
+                self.__code_encoder_type.load_metadata_from_sample(data_sample,
                                                                    per_code_language_metadata[sample_language],
                                                                    self.hyperparameters['code_use_subtokens'],
                                                                    self.hyperparameters['code_mark_subtoken_end'])
-                self.__query_encoder_type.load_metadata_from_sample([d.lower() for d in raw_sample['docstring_tokens']],
+                self.__query_encoder_type.load_metadata_from_sample([d.lower() for d in data_sample['docstring_tokens']],
                                                                     raw_query_metadata)
             yield (raw_query_metadata, per_code_language_metadata)
 
@@ -589,7 +591,8 @@ class Model(ABC):
                 else:
                     full_query_batch_data[key] = value
             if language_to_reweighting_factor is not None:
-                language_weights.extend([language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['tokens']))
+                language_weights.extend(
+                    [language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['code_encoder']['tokens']))
 
         self.__query_encoder.minibatch_to_feed_dict(full_query_batch_data, final_minibatch, is_train)
         if language_to_reweighting_factor is not None:
@@ -930,7 +933,7 @@ class Model(ABC):
                     "code",
                     self.hyperparameters,
                     self.__per_code_language_metadata[language],
-                    code_tokens,
+                    sample_to_parse,
                     function_name,
                     result_holder=result_holder,
                     is_test=True)
