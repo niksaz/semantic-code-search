@@ -1,10 +1,12 @@
 import collections
-from typing import Optional
+from typing import Optional, Mapping
 
 from dpu_utils.utils import RichPath
 
 CODE_TOKENS_LABEL = 'code_tokens'
-RAW_TREE_LABEL = 'raw_tree'
+TREE_LABEL = '_raw_tree'
+COMPRESSED_TREE_LABEL = '_compressed_100'
+GRAPH_LABEL = '_graphs'
 
 TreeNode = collections.OrderedDict
 
@@ -44,32 +46,32 @@ def _remove_docstring_node(root: TreeNode) -> None:
     pass
 
 
-def _original_to_raw_tree_path(file_path: RichPath, language: str, raw_tree_suffix: str):
-  raw_tree_path = file_path.__str__().replace(f'/{language}/', f'/{language}{raw_tree_suffix}/')
-  return RichPath.create(raw_tree_path)
+def combined_samples_generator(resource_mapping: Mapping[str, Optional[RichPath]]):
+  language = 'python'
+  resource_iterator = {}
+  for resource, data_file in resource_mapping.items():
+    assert resource in [CODE_TOKENS_LABEL, TREE_LABEL, COMPRESSED_TREE_LABEL, GRAPH_LABEL]
+    if data_file is None:
+      code_data_file = resource_mapping.get(CODE_TOKENS_LABEL)
+      assert code_data_file
+      data_file = str(code_data_file).replace(f'/{language}/', f'/{language}{resource}/')
+    resource_iterator[resource] = data_file.read_by_file_suffix()
 
-
-def combined_samples_generator(
-    data_file: RichPath,
-    # raw_tree_suffix='_raw_trees'):
-    # raw_tree_suffix='_compressed_100'):
-    raw_tree_suffix='_graphs'):
-  raw_tree_iterator = None
-  for raw_sample in data_file.read_by_file_suffix():
-    assert CODE_TOKENS_LABEL in raw_sample
-    if raw_tree_iterator is None:
-      raw_tree_path = _original_to_raw_tree_path(
-        data_file,
-        language=raw_sample['language'],
-        raw_tree_suffix=raw_tree_suffix)
-      raw_tree_iterator = raw_tree_path.read_by_file_suffix()
-    raw_tree = next(raw_tree_iterator)
-    if raw_tree_suffix in ['_raw_trees', '_compressed_100']:
-      _remove_docstring_node(raw_tree)
-    elif raw_tree_suffix == '_graphs':
-      pass
-    else:
-      raise ValueError('Unknown resource type:', raw_tree_suffix)
-    assert RAW_TREE_LABEL not in raw_sample
-    raw_sample[RAW_TREE_LABEL] = raw_tree
-    yield raw_sample
+  while True:
+    sample = {}
+    try:
+      for resource, iterator in resource_iterator.items():
+        resource_item = next(iterator)
+        if resource == CODE_TOKENS_LABEL:
+          assert CODE_TOKENS_LABEL in resource_item
+          sample.update(resource_item)
+        elif resource in [TREE_LABEL, COMPRESSED_TREE_LABEL]:
+          _remove_docstring_node(resource_item)
+          sample[resource] = resource_item
+        elif resource == GRAPH_LABEL:
+          sample[resource] = resource_item
+        else:
+          raise ValueError(f'Generator for {resource} is not implemented')
+    except StopIteration:
+      break
+    yield sample
