@@ -1,13 +1,11 @@
 import collections
-import pickle
 from typing import Any, Dict, Optional, Tuple, List
-from collections import Counter
 
 import tensorflow as tf
 
 from . import Encoder, QueryType, NBoWEncoder, PretrainedNBoWEncoder
 from utils import data_pipeline
-from dpu_utils.mlutils import Vocabulary
+from encoders.utils import tree_processing
 
 
 def get_graph_nodes(graph: collections.OrderedDict) -> List[str]:
@@ -17,28 +15,14 @@ def get_graph_nodes(graph: collections.OrderedDict) -> List[str]:
     return ['*#$%UNKNOWN*#$%']
 
 
-def load_pretrained_metadata(encoder_label: str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
-  resource = '_graphs'
-  vocabulary_path = f'/home/zerogerc/msazanovich/CodeSearchNet/resources/embeddings/{resource}/token_to_index.pickle'
-  with open(vocabulary_path, 'rb') as fin:
-    token_to_index = pickle.load(fin)
-  # Fictive counts so that the ordering in the internal vocabulary will be the same as the indices in the dict.
-  token_to_count = {}
-  for token, index in token_to_index.items():
-    token_to_count[token] = len(token_to_index) - index
-  token_counter = Counter(token_to_count)
-  token_vocabulary = Vocabulary.create_vocabulary(
-    tokens=token_counter,
-    max_size=hyperparameters['%s_token_vocab_size' % encoder_label],
-    count_threshold=0)
-  print('token_to_index', token_to_index)
-  print('token_vocabulary.id_to_token', token_vocabulary.id_to_token)
+class DataPreprocessor:
+  @staticmethod
+  def extract_code_data(data_to_load):
+    return data_to_load[data_pipeline.CODE_TOKENS_LABEL]
 
-  final_metadata = {}
-  final_metadata['token_vocab'] = token_vocabulary
-  # Save the most common tokens for use in data augmentation:
-  final_metadata['common_tokens'] = token_counter.most_common(50)
-  return final_metadata
+  @staticmethod
+  def extract_ast_data(data_to_load):
+    return tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.TREE_LABEL])
 
 
 class CodeTokensASTEncoder(Encoder):
@@ -94,12 +78,12 @@ class CodeTokensASTEncoder(Encoder):
   def load_metadata_from_sample(cls, data_to_load: Any, raw_metadata: Dict[str, Any],
                                 use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
     cls.CODE_ENCODER_CLASS.load_metadata_from_sample(
-      data_to_load[data_pipeline.CODE_TOKENS_LABEL],
+      DataPreprocessor.extract_code_data(data_to_load),
       raw_metadata[cls.CODE_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
     cls.AST_ENCODER_CLASS.load_metadata_from_sample(
-      get_graph_nodes(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      DataPreprocessor.extract_ast_data(data_to_load),
       raw_metadata[cls.AST_ENCODER_LABEL],
       use_subtokens,
       mark_subtoken_end)
@@ -116,7 +100,7 @@ class CodeTokensASTEncoder(Encoder):
           hyperparameters,
           code_encoder_metadata_list),
       cls.AST_ENCODER_LABEL:
-        load_pretrained_metadata(
+        cls.AST_ENCODER_CLASS.finalise_metadata(
           encoder_label,
           hyperparameters,
           ast_encoder_metadata_list),
@@ -132,7 +116,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.CODE_ENCODER_LABEL],
-      data_to_load[data_pipeline.CODE_TOKENS_LABEL],
+      DataPreprocessor.extract_code_data(data_to_load),
       function_name,
       result_holder[cls.CODE_ENCODER_LABEL],
       is_test)
@@ -142,7 +126,7 @@ class CodeTokensASTEncoder(Encoder):
       encoder_label,
       hyperparameters,
       metadata[cls.AST_ENCODER_LABEL],
-      get_graph_nodes(data_to_load[data_pipeline.RAW_TREE_LABEL]),
+      DataPreprocessor.extract_ast_data(data_to_load),
       function_name,
       result_holder[cls.AST_ENCODER_LABEL],
       is_test)
