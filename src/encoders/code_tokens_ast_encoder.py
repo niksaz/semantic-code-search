@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Tuple, List
 
 import tensorflow as tf
 
-from . import Encoder, QueryType, NBoWEncoder, PretrainedNBoWEncoder
+from . import Encoder, QueryType, NBoWEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, TBCNNEncoder
 from utils import data_pipeline
 from encoders.utils import tree_processing
 
@@ -22,13 +22,25 @@ class DataPreprocessor:
 
   @staticmethod
   def extract_ast_data(data_to_load):
+    # node2vec [Graphs]
     return get_graph_nodes(data_to_load[data_pipeline.GRAPH_LABEL])
+    # NBOW+Types [AST]
+    # node2vec [AST]
     # return tree_processing.get_type_bag_from_tree(data_to_load[data_pipeline.TREE_LABEL])
+    # TBCNN [AST]
+    # return data_to_load[data_pipeline.TREE_LABEL]
 
 
 class CodeTokensASTEncoder(Encoder):
   CODE_ENCODER_CLASS = NBoWEncoder
-  AST_ENCODER_CLASS = PretrainedNBoWEncoder
+  # node2vec [Graphs]
+  AST_ENCODER_CLASS = GraphPretrainedNBoWEncoder
+  # NBOW+Types [AST]
+  # AST_ENCODER_CLASS = NBoWEncoder
+  # node2vec [AST]
+  # AST_ENCODER_CLASS = ASTPretrainedNBoWEncoder
+  # TBCNN [AST]
+  # AST_ENCODER_CLASS = TBCNNEncoder
   CODE_ENCODER_LABEL = 'code_encoder'
   AST_ENCODER_LABEL = 'ast_encoder'
 

@@ -10,20 +10,10 @@ import tensorflow as tf
 from dpu_utils.mlutils import Vocabulary
 from utils.tfutils import pool_sequence_embedding
 from .masked_seq_encoder import MaskedSeqEncoder
+from utils import data_pipeline
 
 
 class PretrainedNBoWEncoder(MaskedSeqEncoder):
-    @classmethod
-    def get_default_hyperparameters(cls) -> Dict[str, Any]:
-        encoder_hypers = {
-            'nbow_pool_mode': 'weighted_mean',
-            'resource': '_graphs',
-            # 'resource': '_raw_trees',
-        }
-        hypers = super().get_default_hyperparameters()
-        hypers.update(encoder_hypers)
-        return hypers
-
     def __init__(self, label: str, hyperparameters: Dict[str, Any], metadata: Dict[str, Any]):
         super().__init__(label, hyperparameters, metadata)
 
@@ -33,7 +23,7 @@ class PretrainedNBoWEncoder(MaskedSeqEncoder):
 
     def pretrained_embedding_layer(self, token_inp: tf.Tensor) -> tf.Tensor:
         resource = self.get_hyper('resource')
-        embedding_path = f'../resources/embeddings/{resource}/embeddings.npy'
+        embedding_path = f'resources/embeddings/{resource}/embeddings.npy'
         embedding = np.load(embedding_path)
         N, K = embedding.shape
         # Add a zero embedding for the UNK token.
@@ -53,7 +43,7 @@ class PretrainedNBoWEncoder(MaskedSeqEncoder):
                           raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
         hypers = cls.get_default_hyperparameters()
         resource = hypers['resource']
-        vocabulary_path = f'../resources/embeddings/{resource}/token_to_index.pickle'
+        vocabulary_path = f'resources/embeddings/{resource}/token_to_index.pickle'
         with open(vocabulary_path, 'rb') as fin:
             token_to_index = pickle.load(fin)
         # Fictive counts so that the ordering in the internal vocabulary will be the same as the indices in the dict.
@@ -86,3 +76,27 @@ class PretrainedNBoWEncoder(MaskedSeqEncoder):
                 sequence_token_embeddings=seq_tokens_embeddings,
                 sequence_lengths=seq_token_lengths,
                 sequence_token_masks=seq_token_mask)
+
+
+class ASTPretrainedNBoWEncoder(PretrainedNBoWEncoder):
+    @classmethod
+    def get_default_hyperparameters(cls) -> Dict[str, Any]:
+        encoder_hypers = {
+            'nbow_pool_mode': 'weighted_mean',
+            'resource': data_pipeline.TREE_LABEL,
+        }
+        hypers = super().get_default_hyperparameters()
+        hypers.update(encoder_hypers)
+        return hypers
+
+
+class GraphPretrainedNBoWEncoder(PretrainedNBoWEncoder):
+    @classmethod
+    def get_default_hyperparameters(cls) -> Dict[str, Any]:
+        encoder_hypers = {
+            'nbow_pool_mode': 'weighted_mean',
+            'resource': data_pipeline.GRAPH_LABEL,
+        }
+        hypers = super().get_default_hyperparameters()
+        hypers.update(encoder_hypers)
+        return hypers
