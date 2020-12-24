@@ -1,10 +1,10 @@
 import collections
-from typing import Optional, Mapping
+from typing import Dict, Optional
 
 from dpu_utils.utils import RichPath
 
 CODE_TOKENS_LABEL = 'code_tokens'
-TREE_LABEL = '_raw_tree'
+TREE_LABEL = '_raw_trees'
 COMPRESSED_TREE_LABEL = '_compressed_100'
 GRAPH_LABEL = '_graphs'
 
@@ -46,15 +46,20 @@ def _remove_docstring_node(root: TreeNode) -> None:
     pass
 
 
-def combined_samples_generator(resource_mapping: Mapping[str, Optional[RichPath]]):
+def combined_samples_generator(resource_mapping: Dict[str, Optional[RichPath]]):
   language = 'python'
+  # If we are training, load all available resources.
+  if len(resource_mapping) == 1 and list(resource_mapping.keys())[0] == CODE_TOKENS_LABEL:
+    code_data_file = resource_mapping.get(CODE_TOKENS_LABEL)
+    assert code_data_file
+    for resource in [TREE_LABEL, COMPRESSED_TREE_LABEL, GRAPH_LABEL]:
+      resource_path = str(code_data_file).replace(f'/{language}/', f'/{language}{resource}/')
+      data_file = RichPath.create(resource_path)
+      resource_mapping[resource] = data_file
+
   resource_iterator = {}
   for resource, data_file in resource_mapping.items():
     assert resource in [CODE_TOKENS_LABEL, TREE_LABEL, COMPRESSED_TREE_LABEL, GRAPH_LABEL]
-    if data_file is None:
-      code_data_file = resource_mapping.get(CODE_TOKENS_LABEL)
-      assert code_data_file
-      data_file = str(code_data_file).replace(f'/{language}/', f'/{language}{resource}/')
     resource_iterator[resource] = data_file.read_by_file_suffix()
 
   while True:

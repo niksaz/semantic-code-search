@@ -48,7 +48,8 @@ def parse_data_file(hyperparameters: Dict[str, Any],
                     is_test: bool,
                     data_file: RichPath) -> Dict[str, List[Tuple[bool, Dict[str, Any]]]]:
     results: DefaultDict[str, List] = defaultdict(list)
-    for data_sample in tqdm.tqdm(data_pipeline.combined_samples_generator(data_file)):
+    for data_sample in tqdm.tqdm(
+            data_pipeline.combined_samples_generator({data_pipeline.CODE_TOKENS_LABEL: data_file})):
         sample: Dict = {}
         language = data_sample['language']
         if language.startswith('python'):  # In some datasets, we use 'python-2.7' and 'python-3'
@@ -402,7 +403,7 @@ class Model(ABC):
             raw_query_metadata = self.__query_encoder_type.init_metadata()
             per_code_language_metadata: DefaultDict[str, Dict[str, Any]] = defaultdict(self.__code_encoder_type.init_metadata)
 
-            for data_sample in data_pipeline.combined_samples_generator(file_path):
+            for data_sample in data_pipeline.combined_samples_generator({data_pipeline.CODE_TOKENS_LABEL: file_path}):
                 sample_language = data_sample['language']
                 self.__code_encoder_type.load_metadata_from_sample(data_sample,
                                                                    per_code_language_metadata[sample_language],
