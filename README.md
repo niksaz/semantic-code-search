@@ -5,7 +5,7 @@
 ### Data
 
 To reproduce our experiments you should download the archive with all the
-resources (ASTs, graphs, embeddings:
+resources (ASTs, graphs, embeddings):
 https://drive.google.com/file/d/1XPYViMkZTYae0DkbzTg3RB6-mG-x043E.
 
 Alternatively, you can download the CodeSearchNet benchmark data by running:
@@ -74,3 +74,30 @@ For graph parsing we use [typilus fork](https://github.com/JetBrains-Research/ty
 To work with graph parsers, do the following:
 
 1. Clone the aforementioned repository to `src/processing/typilus`
+
+## Pretrained models
+
+You can load for the testing/evaluation using the run ids from the [Weights & Biases](https://wandb.ai).
+The pretrained models in the same order as they appear in the paper are:
+
+`NBOW`: [msazanovich/CodeSearchNet-src/33jlj8pn](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/33jlj8pn)
+
+`NBOW + AST`: [msazanovich/CodeSearchNet-src/37f1j1l2](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/37f1j1l2)
+
+`AST node2vec`: [msazanovich/CodeSearchNet-src/ihap35bh](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/ihap35bh)
+
+`TBCNN`: [msazanovich/CodeSearchNet-src/77y9fj1y](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/77y9fj1y)
+
+`NBOW + graph`: [egor-bogomolov/semantic-code-search-src/3nq3g667](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/3nq3g667)
+
+`Graph node2vec`: [msazanovich/CodeSearchNet-src/1r3y07gk](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/1r3y07gk)
+
+`Transformer + types`: [egor-bogomolov/semantic-code-search-src/2nf2sb3b](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/2nf2sb3b)
+
+`GREAT`: [egor-bogomolov/semantic-code-search-src/334uyl5k](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/334uyl5k)
+
+`GGNN`: [egor-bogomolov/semantic-code-search-src/2c1vwty5](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/2c1vwty5)
+
+`GRU-GGNN`: [egor-bogomolov/semantic-code-search-src/1atdvf5p](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/1atdvf5p)
+
+`Transformer-GGNN`: [egor-bogomolov/semantic-code-search-src/f35yfbis](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/f35yfbis)
