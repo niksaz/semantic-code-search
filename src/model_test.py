@@ -207,7 +207,8 @@ def get_dataset_from(data_dirs: List[RichPath],
                      use_func_names: bool=False, 
                      max_files_per_dir: Optional[int] = None) -> List[Dict[str, Any]]:
     data_files = sorted(get_data_files_from_directory(data_dirs, max_files_per_dir))
-    data = list(chain(*chain(list(data_pipeline.combined_samples_generator(f)) for f in data_files)))
+    data = list(chain(*chain(list(
+        data_pipeline.combined_samples_generator({data_pipeline.CODE_TOKENS_LABEL: f})) for f in data_files)))
 
     if use_func_names:
         # This task tries to match the function name to the code, by setting the function name as the query

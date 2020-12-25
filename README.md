@@ -16,13 +16,28 @@ $ pip install -r requirements.txt
 
 ### Training
 
-To train only on the python data, run:
+We train our models on python data. 
+
+To train the NBoW model, run:
 
 ```
 $ python src/train.py --model neuralbow trained_models \
     resources/data/python/final/jsonl/train \
     resources/data/python/final/jsonl/valid \
     resources/data/python/final/jsonl/test
+```
+
+For the training commands of the other models, see `./run_trees.sh`.
+
+### Evaluation
+
+After training is complete, you will get a checkpoint in the specified directory (e.g., `trained_models`).
+
+Run the following commands for prediction and evaluation on the 99 natural language queries:
+
+```
+$ python src/predict.py -m trained_models/..._best.pkl.gz -p predictions.csv
+$ python src/relevanceeval.py resources/annotationStore.csv predictions.csv
 ```
 
 ### AST parsing

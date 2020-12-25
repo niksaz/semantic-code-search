@@ -15,7 +15,7 @@ from dpu_utils.utils import RichPath
 
 from utils import data_pipeline
 from utils.py_utils import run_jobs_in_parallel
-from encoders import Encoder, QueryType
+from encoders import Encoder, QueryType, CodeTokensASTEncoder
 
 
 LoadedSamples = Dict[str, List[Dict[str, Any]]]
@@ -40,6 +40,10 @@ def get_data_files_from_directory(data_dirs: List[RichPath],
     return files
 
 
+def encoder_requires_full_data_sample(code_encoder_class: Type[Encoder]) -> bool:
+    return code_encoder_class == CodeTokensASTEncoder or code_encoder_class == CodeTokensGraphEncoder
+
+
 def parse_data_file(hyperparameters: Dict[str, Any],
                     code_encoder_class: Type[Encoder],
                     per_code_language_metadata: Dict[str, Dict[str, Any]],
@@ -48,7 +52,8 @@ def parse_data_file(hyperparameters: Dict[str, Any],
                     is_test: bool,
                     data_file: RichPath) -> Dict[str, List[Tuple[bool, Dict[str, Any]]]]:
     results: DefaultDict[str, List] = defaultdict(list)
-    for data_sample in tqdm.tqdm(data_pipeline.combined_samples_generator(data_file)):
+    for data_sample in tqdm.tqdm(
+            data_pipeline.combined_samples_generator({data_pipeline.CODE_TOKENS_LABEL: data_file})):
         sample: Dict = {}
         language = data_sample['language']
         if language.startswith('python'):  # In some datasets, we use 'python-2.7' and 'python-3'
@@ -61,7 +66,7 @@ def parse_data_file(hyperparameters: Dict[str, Any],
             "code",
              hyperparameters,
              per_code_language_metadata[language],
-             data_sample,
+             data_sample if encoder_requires_full_data_sample(code_encoder_class) else data_sample['code_tokens'],
              function_name,
              sample,
              is_test)
@@ -405,14 +410,16 @@ class Model(ABC):
             raw_query_metadata = self.__query_encoder_type.init_metadata()
             per_code_language_metadata: DefaultDict[str, Dict[str, Any]] = defaultdict(self.__code_encoder_type.init_metadata)
 
-            for data_sample in tqdm.tqdm(data_pipeline.combined_samples_generator(file_path)):
+            for data_sample in data_pipeline.combined_samples_generator({data_pipeline.CODE_TOKENS_LABEL: file_path}):
                 sample_language = data_sample['language']
-                self.__code_encoder_type.load_metadata_from_sample(data_sample,
-                                                                   per_code_language_metadata[sample_language],
-                                                                   self.hyperparameters['code_use_subtokens'],
-                                                                   self.hyperparameters['code_mark_subtoken_end'])
-                self.__query_encoder_type.load_metadata_from_sample([d.lower() for d in data_sample['docstring_tokens']],
-                                                                    raw_query_metadata)
+                self.__code_encoder_type.load_metadata_from_sample(
+                    data_sample if encoder_requires_full_data_sample(self.__code_encoder_type) else data_sample['code_tokens'],
+                    per_code_language_metadata[sample_language],
+                    self.hyperparameters['code_use_subtokens'],
+                    self.hyperparameters['code_mark_subtoken_end'])
+                self.__query_encoder_type.load_metadata_from_sample(
+                    [d.lower() for d in data_sample['docstring_tokens']],
+                    raw_query_metadata)
             yield (raw_query_metadata, per_code_language_metadata)
 
         def received_result_callback(metadata_parser_result: Tuple[Dict[str, Any], Dict[str, Dict[str, Any]]]):
@@ -597,8 +604,18 @@ class Model(ABC):
                 else:
                     full_query_batch_data[key] = value
             if language_to_reweighting_factor is not None:
-                language_weights.extend(
-                    [language_to_reweighting_factor[language]] * len(batch_data['per_language_code_data'][language]['graph_encoder']['node_masks']))
+                if self.__code_encoder_type == CodeTokensGraphEncoder:
+                    language_weights.extend(
+                        [language_to_reweighting_factor[language]] *
+                        len(batch_data['per_language_code_data'][language]['graph_encoder']['node_masks']))
+                elif self.__code_encoder_type == CodeTokensASTEncoder:
+                    language_weights.extend(
+                        [language_to_reweighting_factor[language]] *
+                        len(batch_data['per_language_code_data'][language]['code_encoder']['tokens']))
+                else:
+                    language_weights.extend(
+                        [language_to_reweighting_factor[language]] *
+                        len(batch_data['per_language_code_data'][language]['tokens']))
 
         self.__query_encoder.minibatch_to_feed_dict(full_query_batch_data, final_minibatch, is_train)
         if language_to_reweighting_factor is not None:
@@ -940,7 +957,7 @@ class Model(ABC):
                     "code",
                     self.hyperparameters,
                     self.__per_code_language_metadata[language],
-                    sample_to_parse,
+                    sample_to_parse if encoder_requires_full_data_sample(self.__code_encoder_type) else code_tokens,
                     function_name,
                     result_holder=result_holder,
                     is_test=True)

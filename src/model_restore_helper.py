@@ -3,6 +3,11 @@ from typing import Dict, Any, Optional, Type
 import tensorflow as tf
 from dpu_utils.utils import RichPath
 
+from encoders import \
+    CodeTokensASTEncoder, NBoWEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, TBCNNEncoder, \
+    GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor
+from models import \
+    Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
 from encoders import CodeTokensASTEncoder, TBCNNEncoder
 from encoders.graph_encoder import GraphEncoder
 from models import Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
@@ -56,9 +61,26 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
         GraphEncoder.update_config(model_name, False)
         NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
-    elif model_name in ['neuralast', 'neuralastmodel']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder
+
+    elif model_name == 'nbowtypesast':
         NeuralASTModel.MODEL_NAME = model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = NBoWEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = ASTTypeBagDataPreprocessor
+        return NeuralASTModel
+    elif model_name == 'node2vecast':
+        NeuralASTModel.MODEL_NAME = model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = ASTPretrainedNBoWEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = ASTTypeBagDataPreprocessor
+        return NeuralASTModel
+    elif model_name == 'tbcnnast':
+        NeuralASTModel.MODEL_NAME = model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeDataPreprocessor
+        return NeuralASTModel
+    elif model_name == 'node2vecgraphs':
+        NeuralASTModel.MODEL_NAME = model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphPretrainedNBoWEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = GraphNodesDataPreprocessor
         return NeuralASTModel
     elif model_name in ['neuralbow', 'neuralbowmodel']:
         return NeuralBoWModel

@@ -52,13 +52,18 @@ def get_code_tokens_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
   code_tokens = []
   for node in linearization:
     node_tokens = node['string'].split()
-    code_tokens.extend(node_tokens)
+    code_tokens.extend(node_token for node_token in node_tokens if node_token != '|')
   return code_tokens
 
 
-def get_type_bag_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
+def get_type_tokens_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
   linearization = []
   linearize_tree_dfs(tree, linearization)
   type_tokens = list(map(lambda node: node['type'], linearization))
+  return type_tokens
+
+
+def get_type_bag_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
+  type_tokens = get_type_tokens_from_tree(tree)
   type_bag = set(type_tokens)
   return list(type_bag)
