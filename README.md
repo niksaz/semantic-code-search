@@ -4,7 +4,15 @@
 
 ### Data
 
+To reproduce our experiments you should download the archive with all the
+resources (ASTs, graphs, embeddings:
+https://drive.google.com/file/d/1XPYViMkZTYae0DkbzTg3RB6-mG-x043E.
+
+Alternatively, you can download the CodeSearchNet benchmark data by running:
+
 `$ script/setup`
+
+and doing preprocessing yourself following the instructions below.
 
 ### Environment
 
