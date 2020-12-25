@@ -1,4 +1,4 @@
-# code-search-net
+# Semantic Code Search
 
 ## Setup
 
@@ -41,12 +41,19 @@ To train the graph models, see `./run_graphs.sh` and `./run_graphs_plain.sh`.
 
 ### Evaluation
 
-After training is complete, you will get a checkpoint in the specified directory (e.g., `trained_models`).
+After training is complete, you will get a checkpoint in the specified directory
+(e.g., `src/trained_models/$_model_best.pkl.gz`).
 
-Run the following commands for prediction and evaluation on the 99 natural language queries:
+To rerun the MRR testing, launch from `src` dir the following command:
 
 ```
-$ python src/predict.py -m trained_models/..._best.pkl.gz -p predictions.csv
+$ python test.py trained_models/$_model_best.pkl.gz
+```
+
+Run the following commands from root for prediction and evaluation on the 99 natural language queries:
+
+```
+$ python src/predict.py -m src/trained_models/$_model_best.pkl.gz -p predictions.csv
 $ python src/relevanceeval.py resources/annotationStore.csv predictions.csv
 ```
 
