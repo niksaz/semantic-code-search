@@ -17,7 +17,7 @@ and doing preprocessing yourself following the instructions below.
 ### Environment
 
 ```
-$ conda create -n codesearch python=3.6 tensorflow-gpu=1.12.0
+$ conda create -n codesearch python=3.6 tensorflow-gpu=1.15.0
 $ conda activate codesearch
 $ pip install -r requirements.txt
 ```
@@ -74,4 +74,3 @@ For graph parsing we use [typilus fork](https://github.com/JetBrains-Research/ty
 To work with graph parsers, do the following:
 
 1. Clone the aforementioned repository to `src/processing/typilus`
-
