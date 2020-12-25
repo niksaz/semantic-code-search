@@ -30,6 +30,9 @@ def _get_tree_elements_seq(
   nodes_queued += _try_to_queue_node(root, node_queue, nodes_queued, max_nodes)
   while node_queue:
     node = node_queue.popleft()
+    for child in node['children']:
+      if _try_to_queue_node(child, node_queue, nodes_queued, max_nodes):
+        nodes_queued += 1
     node_types.append(node['type'])
     node_tokens.append(node['string'])
   return node_types, node_tokens
