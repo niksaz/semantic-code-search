@@ -58,7 +58,7 @@ class CodeTokensASTEncoder(Encoder):
     for key, value in ast_hypers.items():
       if key in code_hypers and code_hypers[key] != value:
         raise AssertionError(
-          f'The same hyperparameter is set differently for code {code_hypers[key]} and for ast {value}.')
+          f'The same hyperparameter {key} is set differently for code {code_hypers[key]} and for ast {value}.')
     hypers = {}
     hypers.update(code_hypers)
     hypers.update(ast_hypers)

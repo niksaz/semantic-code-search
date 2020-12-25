@@ -8,3 +8,4 @@ from .conv_self_att_encoder import ConvSelfAttentionEncoder
 from .tbcnn_encoder import TBCNNEncoder
 from .code_tokens_ast_encoder import \
   CodeTokensASTEncoder, GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor
+from .graph_tokens_encoder import GraphTokensEncoder

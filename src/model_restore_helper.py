@@ -4,90 +4,86 @@ import tensorflow as tf
 from dpu_utils.utils import RichPath
 
 from encoders import \
-    CodeTokensASTEncoder, NBoWEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, TBCNNEncoder, \
-    GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor
-from models import \
-    Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
-from encoders import CodeTokensASTEncoder, TBCNNEncoder
+    NBoWEncoder, CodeTokensASTEncoder, TBCNNEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, \
+    GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor, GraphTokensEncoder
 from encoders.graph_encoder import GraphEncoder
-from models import Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
+from models import Model, NeuralBoWModel, NeuralASTModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
 
 
 def get_model_class_from_name(model_name: str) -> Type[Model]:
     model_name = model_name.lower()
+    initial_model_name = model_name
     is_plain = False
-    raw_model_name = model_name
     if model_name.endswith('-plain'):
         is_plain = True
         model_name = model_name[:-len('-plain')]
 
     if model_name in ['ggnn', 'ggnnmodel']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, is_plain)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['rnn-ggnn-sandwich']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, is_plain)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['transformer-ggnn-sandwich']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, is_plain)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['great', 'greatmodel']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, is_plain)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['great10', 'great10model']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, is_plain)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['transformer', 'transformermodel']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, is_plain)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['transformer10', 'transformer10model']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, is_plain)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in ['graphnbow', 'graphnbowmodel']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, False)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
-
     elif model_name == 'nbowtypesast':
-        NeuralASTModel.MODEL_NAME = model_name
+        NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = NBoWEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = ASTTypeBagDataPreprocessor
         return NeuralASTModel
     elif model_name == 'node2vecast':
-        NeuralASTModel.MODEL_NAME = model_name
+        NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = ASTPretrainedNBoWEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = ASTTypeBagDataPreprocessor
         return NeuralASTModel
     elif model_name == 'tbcnnast':
-        NeuralASTModel.MODEL_NAME = model_name
+        NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeDataPreprocessor
         return NeuralASTModel
     elif model_name == 'node2vecgraphs':
-        NeuralASTModel.MODEL_NAME = model_name
+        NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphPretrainedNBoWEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = GraphNodesDataPreprocessor
         return NeuralASTModel
     elif model_name in ['neuralbow', 'neuralbowmodel']:
         return NeuralBoWModel
     elif model_name in ['rnn', 'rnnmodel']:
-        CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphEncoder
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
         GraphEncoder.update_config(model_name, False)
-        NeuralASTModel.MODEL_NAME = raw_model_name
         return NeuralASTModel
     elif model_name in {'selfatt', 'selfattention', 'selfattentionmodel'}:
         return SelfAttentionModel

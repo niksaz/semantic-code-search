@@ -1,8 +1,8 @@
 import collections
 from typing import Any, Dict, Optional
 
-from dpu_utils.utils import RichPath
 import numpy as np
+from dpu_utils.utils import RichPath
 
 CODE_TOKENS_LABEL = 'code_tokens'
 TREE_LABEL = '_raw_trees'
@@ -20,32 +20,32 @@ def _get_child_with_type(node: TreeNode, type_str: str) -> Optional[int]:
 
 
 def _remove_docstring_node(root: TreeNode) -> Optional[str]:
-    """The docstring node follows the structure of:
-    module
-      function_definition
-        ...
-        block
-          expression_statement
-            string
-    """
-    try:
-      assert root['type'] == 'module'
-      function_definition_index = _get_child_with_type(root, 'function_definition')
-      assert function_definition_index == 0
-      function_definition_node = root['children'][function_definition_index]
-      block_index = _get_child_with_type(function_definition_node, 'block')
-      assert block_index is not None
-      block_node = function_definition_node['children'][block_index]
-      expression_statement_index = _get_child_with_type(block_node, 'expression_statement')
-      assert expression_statement_index == 0
-      expression_statement_node = block_node['children'][expression_statement_index]
-      string_index = _get_child_with_type(expression_statement_node, 'string')
-      assert string_index == 0
-      # Remove the expression with the string node which corresponds to the docstring.
-      block_node['children'].pop(expression_statement_index)
-      return expression_statement_node['children'][string_index]['string']
-    except AssertionError:
-      return None
+  """The docstring node follows the structure of:
+  module
+    function_definition
+      ...
+      block
+        expression_statement
+          string
+  """
+  try:
+    assert root['type'] == 'module'
+    function_definition_index = _get_child_with_type(root, 'function_definition')
+    assert function_definition_index == 0
+    function_definition_node = root['children'][function_definition_index]
+    block_index = _get_child_with_type(function_definition_node, 'block')
+    assert block_index is not None
+    block_node = function_definition_node['children'][block_index]
+    expression_statement_index = _get_child_with_type(block_node, 'expression_statement')
+    assert expression_statement_index == 0
+    expression_statement_node = block_node['children'][expression_statement_index]
+    string_index = _get_child_with_type(expression_statement_node, 'string')
+    assert string_index == 0
+    # Remove the expression with the string node which corresponds to the docstring.
+    block_node['children'].pop(expression_statement_index)
+    return expression_statement_node['children'][string_index]['string']
+  except AssertionError:
+    return None
 
 
 def normalize_docstring(docstring: str):
@@ -123,7 +123,7 @@ def combined_samples_generator(resource_mapping: Dict[str, Optional[RichPath]]):
   while True:
     sample = {}
     try:
-      docstring = None
+      docstring: Optional[str] = None
       for resource in [CODE_TOKENS_LABEL, TREE_LABEL, COMPRESSED_TREE_LABEL, GRAPH_LABEL]:
         if resource not in resource_iterator:
           continue
