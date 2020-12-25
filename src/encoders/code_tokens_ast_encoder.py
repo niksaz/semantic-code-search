@@ -40,7 +40,7 @@ class CodeTokensASTEncoder(Encoder):
   @property
   def output_representation_size(self) -> int:
     #assert self.code_encoder.output_representation_size == self.ast_encoder.output_representation_size
-    return self.code_encoder.output_representation_size
+    return self.ast_encoder.output_representation_size
 
   def make_model(self, is_train: bool = False) -> tf.Tensor:
     #with tf.variable_scope('code_tokens_encoder'):
