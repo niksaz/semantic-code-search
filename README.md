@@ -35,7 +35,9 @@ $ python src/train.py --model neuralbow trained_models \
     resources/data/python/final/jsonl/test
 ```
 
-For the training commands of the other models, see `./run_trees.sh`.
+For the training commands of the tree models, see `./run_trees.sh`.
+
+To train the graph models, see `./run_graphs.sh` and `./run_graphs_plain.sh`.
 
 ### Evaluation
 
