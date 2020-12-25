@@ -4,38 +4,87 @@ import tensorflow as tf
 from dpu_utils.utils import RichPath
 
 from encoders import \
-    CodeTokensASTEncoder, NBoWEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, TBCNNEncoder, \
-    GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor
-from models import \
-    Model, NeuralBoWModel, NeuralASTModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
+    NBoWEncoder, CodeTokensASTEncoder, TBCNNEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, \
+    GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor, GraphTokensEncoder
+from encoders.graph_encoder import GraphEncoder
+from models import Model, NeuralBoWModel, NeuralASTModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
 
 
 def get_model_class_from_name(model_name: str) -> Type[Model]:
     model_name = model_name.lower()
-    if model_name == 'nbowtypesast':
-        NeuralASTModel.MODEL_NAME = model_name
+    initial_model_name = model_name
+    is_plain = False
+    if model_name.endswith('-plain'):
+        is_plain = True
+        model_name = model_name[:-len('-plain')]
+
+    if model_name in ['ggnn', 'ggnnmodel']:
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, is_plain)
+        return NeuralASTModel
+    elif model_name in ['rnn-ggnn-sandwich']:
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, is_plain)
+        return NeuralASTModel
+    elif model_name in ['transformer-ggnn-sandwich']:
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, is_plain)
+        return NeuralASTModel
+    elif model_name in ['great', 'greatmodel']:
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, is_plain)
+        return NeuralASTModel
+    elif model_name in ['great10', 'great10model']:
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, is_plain)
+        return NeuralASTModel
+    elif model_name in ['transformer', 'transformermodel']:
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, is_plain)
+        return NeuralASTModel
+    elif model_name in ['transformer10', 'transformer10model']:
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, is_plain)
+        return NeuralASTModel
+    elif model_name in ['graphnbow', 'graphnbowmodel']:
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, False)
+        return NeuralASTModel
+    elif model_name == 'nbowtypesast':
+        NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = NBoWEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = ASTTypeBagDataPreprocessor
         return NeuralASTModel
     elif model_name == 'node2vecast':
-        NeuralASTModel.MODEL_NAME = model_name
+        NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = ASTPretrainedNBoWEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = ASTTypeBagDataPreprocessor
         return NeuralASTModel
     elif model_name == 'tbcnnast':
-        NeuralASTModel.MODEL_NAME = model_name
+        NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeDataPreprocessor
         return NeuralASTModel
     elif model_name == 'node2vecgraphs':
-        NeuralASTModel.MODEL_NAME = model_name
+        NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = GraphPretrainedNBoWEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = GraphNodesDataPreprocessor
         return NeuralASTModel
     elif model_name in ['neuralbow', 'neuralbowmodel']:
         return NeuralBoWModel
     elif model_name in ['rnn', 'rnnmodel']:
-        return RNNModel
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
+        GraphEncoder.update_config(model_name, False)
+        return NeuralASTModel
     elif model_name in {'selfatt', 'selfattention', 'selfattentionmodel'}:
         return SelfAttentionModel
     elif model_name in {'1dcnn', 'convolutionalmodel'}:
