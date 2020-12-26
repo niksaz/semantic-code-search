@@ -43,6 +43,16 @@ class TreeDataPreprocessor(DataPreprocessor):
     return data_to_load[data_pipeline.TREE_LABEL]
 
 
+class TreeTokenPlusTypeDataPreprocessor(DataPreprocessor):
+  @classmethod
+  def extract_code_data(cls, data_to_load):
+    return data_to_load[data_pipeline.TREE_LABEL]
+
+  @classmethod
+  def extract_ast_data(cls, data_to_load):
+    return data_to_load[data_pipeline.TREE_LABEL]
+
+
 class CodeTokensASTEncoder(Encoder):
   CODE_ENCODER_CLASS = NBoWEncoder
   AST_ENCODER_CLASS = None

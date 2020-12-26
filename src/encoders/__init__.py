@@ -9,5 +9,6 @@ from .tbcnn_encoder import TBCNNEncoder
 from .astnn_encoder import ASTNNEncoder
 from .ast_tokens_encoder import AstTokensEncoder
 from .code_tokens_ast_encoder import \
-  CodeTokensASTEncoder, GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor
+  CodeTokensASTEncoder, GraphNodesDataPreprocessor, \
+  ASTTypeBagDataPreprocessor, TreeDataPreprocessor, TreeTokenPlusTypeDataPreprocessor
 from .graph_tokens_encoder import GraphTokensEncoder
