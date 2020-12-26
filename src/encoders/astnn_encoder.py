@@ -83,8 +83,8 @@ class ASTNNEncoder(ASTEncoder):
             # 'tree_hidden_size': 100
             # we're considering that hidden_size = type_embedding_size // 2,
             # so that final representation size (after bigru) would be equal to embedding_size
-            'max_num_nodes': 200,
-            'max_children': -1
+            'max_num_nodes': 100,
+            'max_children': 100
         }
         hypers = super().get_default_hyperparameters()
         hypers.update(encoder_hypers)
