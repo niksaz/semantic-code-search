@@ -18,7 +18,7 @@ python src/train.py $DRYRUN --model tbcnnast \
     resources/data/python/final/jsonl/valid \
     resources/data/python/final/jsonl/test
 
-python src/train.py $DRYRUN --model astnn trained_models \
+python src/train.py $DRYRUN --model astnn --sequential trained_models \
     resources/data/python/final/jsonl/train \
     resources/data/python/final/jsonl/valid \
     resources/data/python/final/jsonl/test

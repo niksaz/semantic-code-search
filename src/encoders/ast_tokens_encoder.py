@@ -37,13 +37,13 @@ class AstTokensEncoder(Encoder):
   def _make_placeholders(self):
     super()._make_placeholders()
     self.placeholders['node_masks'] = tf.placeholder(tf.float32, shape=[None, None], name='node_masks')
-    self.placeholders['node_token_ids'] = tf.placeholder(tf.int32, shape=[None, None], name='node_token_ids')
+    self.placeholders['tokens'] = tf.placeholder(tf.int32, shape=[None, None], name='tokens')
 
   def make_model(self, is_train: bool = False) -> tf.Tensor:
     with tf.variable_scope('ast_tokens_encoder'):
       self._make_placeholders()
 
-      node_tokens = self.embedding_layer(self.placeholders['node_token_ids'])
+      node_tokens = self.embedding_layer(self.placeholders['tokens'])
       node_token_masks = self.placeholders['node_masks']
       node_token_lens = tf.reduce_sum(node_token_masks, axis=1)  # B
       token_encoding = pool_sequence_embedding('mean',
@@ -111,19 +111,19 @@ class AstTokensEncoder(Encoder):
         node_tokens,
         hyperparameters[f'{encoder_label}_max_num_tokens']))
     result_holder[f'{encoder_label}_node_masks'] = list(mask)
-    result_holder[f'{encoder_label}_node_token_ids'] = list(node_token_ids)
+    result_holder[f'{encoder_label}_tokens'] = list(node_token_ids)
     return True
 
   def init_minibatch(self, batch_data: Dict[str, Any]) -> None:
     super().init_minibatch(batch_data)
     batch_data['node_masks'] = []
-    batch_data['node_token_ids'] = []
+    batch_data['tokens'] = []
 
   def extend_minibatch_by_sample(self, batch_data: Dict[str, Any], sample: Dict[str, Any], is_train: bool = False,
                                  query_type: QueryType = QueryType.DOCSTRING.value) -> bool:
     current_sample = {}
     current_sample['node_masks'] = sample[f'{self.label}_node_masks']
-    current_sample['node_token_ids'] = sample[f'{self.label}_node_token_ids']
+    current_sample['tokens'] = sample[f'{self.label}_tokens']
     for key, value in current_sample.items():
       if key in batch_data:
         batch_data[key].append(value)
@@ -132,14 +132,14 @@ class AstTokensEncoder(Encoder):
   def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any], is_train: bool) -> None:
     super().minibatch_to_feed_dict(batch_data, feed_dict, is_train)
     node_masks = batch_data['node_masks']
-    node_token_ids = batch_data['node_token_ids']
+    node_token_ids = batch_data['tokens']
     if node_masks:
       max_tokens = max([len(x) for x in node_masks])
       node_masks = [n + [0] * (max_tokens - len(n)) for n in node_masks]
       node_token_ids = [n + [-1] * (max_tokens - len(n)) for n in node_token_ids]
 
     tfutils.write_to_feed_dict(feed_dict, self.placeholders['node_masks'], node_masks)
-    tfutils.write_to_feed_dict(feed_dict, self.placeholders['node_token_ids'], node_token_ids)
+    tfutils.write_to_feed_dict(feed_dict, self.placeholders['tokens'], node_token_ids)
 
   def get_token_embeddings(self) -> Tuple[tf.Tensor, List[str]]:
     return self.__embeddings, list(self.metadata['token_vocab'].id_to_token)
