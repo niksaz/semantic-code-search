@@ -30,7 +30,7 @@ def _linearize_tree_bfs(
   return nodes, children
 
 
-class TBCNNEncoder(Encoder):
+class TBCNNEncoder(ASTEncoder):
   @classmethod
   def get_default_hyperparameters(cls) -> Dict[str, Any]:
     encoder_hypers = {
