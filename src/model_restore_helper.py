@@ -77,9 +77,8 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
     elif model_name == 'astnn':
         NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = ASTNNEncoder
-        #CodeTokensASTEncoder.CODE_ENCODER_CLASS = AstTokensEncoder
-        #CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeTokenPlusTypeDataPreprocessor
-        CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeDataPreprocessor
+        CodeTokensASTEncoder.CODE_ENCODER_CLASS = AstTokensEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeTokenPlusTypeDataPreprocessor
         return NeuralASTModel
     elif model_name == 'node2vecgraphs':
         NeuralASTModel.MODEL_NAME = initial_model_name
