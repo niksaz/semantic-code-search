@@ -4,8 +4,9 @@ import tensorflow as tf
 from dpu_utils.utils import RichPath
 
 from encoders import \
-    NBoWEncoder, CodeTokensASTEncoder, TBCNNEncoder, ASTPretrainedNBoWEncoder, GraphPretrainedNBoWEncoder, \
-    GraphNodesDataPreprocessor, ASTTypeBagDataPreprocessor, TreeDataPreprocessor, GraphTokensEncoder
+    NBoWEncoder, CodeTokensASTEncoder, TBCNNEncoder, ASTNNEncoder, AstTokensEncoder, ASTPretrainedNBoWEncoder,\
+    GraphPretrainedNBoWEncoder, GraphTokensEncoder, GraphNodesDataPreprocessor,\
+    ASTTypeBagDataPreprocessor, TreeDataPreprocessor, TreeTokenPlusTypeDataPreprocessor
 from encoders.graph_encoder import GraphEncoder
 from models import Model, NeuralBoWModel, NeuralASTModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
 
@@ -72,6 +73,12 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
         NeuralASTModel.MODEL_NAME = initial_model_name
         CodeTokensASTEncoder.AST_ENCODER_CLASS = TBCNNEncoder
         CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeDataPreprocessor
+        return NeuralASTModel
+    elif model_name == 'astnn':
+        NeuralASTModel.MODEL_NAME = initial_model_name
+        CodeTokensASTEncoder.AST_ENCODER_CLASS = ASTNNEncoder
+        CodeTokensASTEncoder.CODE_ENCODER_CLASS = AstTokensEncoder
+        CodeTokensASTEncoder.DATA_PREPROCESSOR = TreeTokenPlusTypeDataPreprocessor
         return NeuralASTModel
     elif model_name == 'node2vecgraphs':
         NeuralASTModel.MODEL_NAME = initial_model_name

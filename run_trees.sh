@@ -18,6 +18,11 @@ python src/train.py $DRYRUN --model tbcnnast \
     resources/data/python/final/jsonl/valid \
     resources/data/python/final/jsonl/test
 
+python src/train.py $DRYRUN --model astnn --sequential trained_models \
+    resources/data/python/final/jsonl/train \
+    resources/data/python/final/jsonl/valid \
+    resources/data/python/final/jsonl/test
+
 python src/train.py $DRYRUN --model node2vecgraphs trained_models \
     resources/data/python/final/jsonl/train \
     resources/data/python/final/jsonl/valid \
