@@ -20,11 +20,13 @@ def run(arguments):
     input_folder = RichPath.create(arguments['INPUT_PATH'], azure_info_path)
     output_folder = RichPath.create(arguments['OUTPUT_PATH'], azure_info_path)
 
-    with ChunkWriter(output_folder, file_prefix='codedata', max_chunk_size=500, file_suffix='.jsonl.gz') as chunked_writer:
+    with ChunkWriter(output_folder, file_prefix='codedata', max_chunk_size=500,
+                     file_suffix='.jsonl.gz') as chunked_writer:
         for file in input_folder.iterate_filtered_files_in_dir('*.jsonl.gz'):
             for line in file.read_by_file_suffix():
-                tokens=line['code_tokens']
-                chunked_writer.add(dict(filename='%s:%s:%s' % (line['repo'], line['path'], line['lineno']), tokens=tokens))
+                tokens = line['code_tokens']
+                chunked_writer.add(
+                    dict(filename='%s:%s:%s' % (line['repo'], line['path'], line['lineno']), tokens=tokens))
 
 
 if __name__ == '__main__':

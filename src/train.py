@@ -37,17 +37,18 @@ import json
 import os
 import sys
 import time
-from typing import Type, Dict, Any, Optional, List
 from pathlib import Path
+from typing import Type, Dict, Any, Optional, List
 
 from docopt import docopt
 from dpu_utils.utils import RichPath, git_tag_run, run_and_debug
-import wandb
 
 import model_restore_helper
+import model_test as test
+import wandb
 from model_test import compute_evaluation_metrics
 from models.model import Model
-import model_test as test
+
 
 def run_train(model_class: Type[Model],
               train_data_dirs: List[RichPath],
@@ -67,7 +68,8 @@ def run_train(model_class: Type[Model],
                                                                                              str(hyperparameters)))
         resume = True
     else:
-        model.train_log("Tokenizing and building vocabulary for code snippets and queries.  This step may take several hours.")
+        model.train_log(
+            "Tokenizing and building vocabulary for code snippets and queries.  This step may take several hours.")
         model.load_metadata(train_data_dirs, max_files_per_dir=max_files_per_dir, parallelize=parallelize)
         model.make_model(is_train=True)
         model.train_log("Starting training run %s of model %s with following hypers:\n%s" % (run_name,
@@ -78,13 +80,15 @@ def run_train(model_class: Type[Model],
     philly_job_id = os.environ.get('PHILLY_JOB_ID')
     if philly_job_id is not None:
         # We are in Philly write out the model name in an auxiliary file
-        with open(os.path.join(save_folder, philly_job_id+'.job'), 'w') as f:
+        with open(os.path.join(save_folder, philly_job_id + '.job'), 'w') as f:
             f.write(os.path.basename(model.model_save_path))
-    
+
     wandb.config.update(model.hyperparameters)
     model.train_log("Loading training and validation data.")
-    train_data = model.load_data_from_dirs(train_data_dirs, is_test=False, max_files_per_dir=max_files_per_dir, parallelize=parallelize)
-    valid_data = model.load_data_from_dirs(valid_data_dirs, is_test=False, max_files_per_dir=max_files_per_dir, parallelize=parallelize)
+    train_data = model.load_data_from_dirs(train_data_dirs, is_test=False, max_files_per_dir=max_files_per_dir,
+                                           parallelize=parallelize)
+    valid_data = model.load_data_from_dirs(valid_data_dirs, is_test=False, max_files_per_dir=max_files_per_dir,
+                                           parallelize=parallelize)
     model.train_log("Begin Training.")
     model_path = model.train(train_data, valid_data, azure_info_path, quiet=quiet, resume=resume)
     return model_path
@@ -106,23 +110,23 @@ def make_run_id(arguments: Dict[str, Any]) -> str:
 def run(arguments, tag_in_vcs=False) -> None:
     azure_info_path = arguments.get('--azure-info', None)
     testrun = arguments.get('--testrun')
-    max_files_per_dir=arguments.get('--max-files-per-dir')
+    max_files_per_dir = arguments.get('--max-files-per-dir')
 
     dir_path = Path(__file__).parent.absolute()
 
     # if you do not pass arguments for train/valid/test data default to files checked into repo.
     if not arguments['TRAIN_DATA_PATH']:
-        arguments['TRAIN_DATA_PATH'] = str(dir_path/'data_dirs_train.txt')
-        arguments['VALID_DATA_PATH'] = str(dir_path/'data_dirs_valid.txt')
-        arguments['TEST_DATA_PATH'] = str(dir_path/'data_dirs_test.txt')
+        arguments['TRAIN_DATA_PATH'] = str(dir_path / 'data_dirs_train.txt')
+        arguments['VALID_DATA_PATH'] = str(dir_path / 'data_dirs_valid.txt')
+        arguments['TEST_DATA_PATH'] = str(dir_path / 'data_dirs_test.txt')
 
     train_data_dirs = test.expand_data_path(arguments['TRAIN_DATA_PATH'], azure_info_path)
     valid_data_dirs = test.expand_data_path(arguments['VALID_DATA_PATH'], azure_info_path)
     test_data_dirs = test.expand_data_path(arguments['TEST_DATA_PATH'], azure_info_path)
-    
+
     # default model save location
     if not arguments['SAVE_FOLDER']:
-        arguments['SAVE_FOLDER'] =  str(dir_path.parent/'resources/saved_models/')
+        arguments['SAVE_FOLDER'] = str(dir_path.parent / 'resources/saved_models/')
 
     save_folder = arguments['SAVE_FOLDER']
 
@@ -167,21 +171,21 @@ def run(arguments, tag_in_vcs=False) -> None:
                          'run-name': arguments.get('--run-name'),
                          'CLI-command': ' '.join(sys.argv)})
 
-
     if arguments.get('--evaluate-model'):
         model_path = RichPath.create(arguments['--evaluate-model'])
     else:
         model_path = run_train(model_class, train_data_dirs, valid_data_dirs, save_folder, hyperparameters,
                                azure_info_path, run_name, arguments['--quiet'],
                                max_files_per_dir=max_files_per_dir,
-                               parallelize=not(arguments['--sequential']))
+                               parallelize=not (arguments['--sequential']))
 
     wandb.config['best_model_path'] = str(model_path)
     wandb.save(str(model_path.to_local_path()))
 
     # only limit files in test run if `--testrun` flag is passed by user.
     if testrun:
-        compute_evaluation_metrics(model_path, arguments, azure_info_path, valid_data_dirs, test_data_dirs, max_files_per_dir)
+        compute_evaluation_metrics(model_path, arguments, azure_info_path, valid_data_dirs, test_data_dirs,
+                                   max_files_per_dir)
     else:
         compute_evaluation_metrics(model_path, arguments, azure_info_path, valid_data_dirs, test_data_dirs)
 

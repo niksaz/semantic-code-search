@@ -4,8 +4,8 @@ import tensorflow as tf
 from dpu_utils.utils import RichPath
 
 from encoders import \
-    NBoWEncoder, CodeTokensASTEncoder, TBCNNEncoder, ASTNNEncoder, AstTokensEncoder, ASTPretrainedNBoWEncoder,\
-    GraphPretrainedNBoWEncoder, GraphTokensEncoder, GraphNodesDataPreprocessor,\
+    NBoWEncoder, CodeTokensASTEncoder, TBCNNEncoder, ASTNNEncoder, AstTokensEncoder, ASTPretrainedNBoWEncoder, \
+    GraphPretrainedNBoWEncoder, GraphTokensEncoder, GraphNodesDataPreprocessor, \
     ASTTypeBagDataPreprocessor, TreeDataPreprocessor, TreeTokenPlusTypeDataPreprocessor
 from encoders.graph_encoder import GraphEncoder
 from models import Model, NeuralBoWModel, NeuralASTModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel
@@ -102,7 +102,7 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
         raise Exception("Unknown model '%s'!" % model_name)
 
 
-def restore(path: RichPath, is_train: bool, hyper_overrides: Optional[Dict[str, Any]]=None) -> Model:
+def restore(path: RichPath, is_train: bool, hyper_overrides: Optional[Dict[str, Any]] = None) -> Model:
     saved_data = path.read_as_pickle()
 
     if hyper_overrides is not None:
@@ -120,7 +120,8 @@ def restore(path: RichPath, is_train: bool, hyper_overrides: Optional[Dict[str, 
         with tf.name_scope("restore"):
             restore_ops = []
             used_vars = set()
-            for variable in sorted(model.sess.graph.get_collection(tf.GraphKeys.GLOBAL_VARIABLES), key=lambda v: v.name):
+            for variable in sorted(model.sess.graph.get_collection(tf.GraphKeys.GLOBAL_VARIABLES),
+                                   key=lambda v: v.name):
                 used_vars.add(variable.name)
                 if variable.name in saved_data['weights']:
                     # print('Initializing %s from saved value.' % variable.name)
@@ -130,7 +131,8 @@ def restore(path: RichPath, is_train: bool, hyper_overrides: Optional[Dict[str, 
                     variables_to_initialize.append(variable)
             for var_name in sorted(saved_data['weights']):
                 if var_name not in used_vars:
-                    if var_name.endswith('Adam:0') or var_name.endswith('Adam_1:0') or var_name in ['beta1_power:0', 'beta2_power:0']:
+                    if var_name.endswith('Adam:0') or var_name.endswith('Adam_1:0') or var_name in ['beta1_power:0',
+                                                                                                    'beta2_power:0']:
                         continue
                     print('Saved weights for %s not used by model.' % var_name)
             restore_ops.append(tf.variables_initializer(variables_to_initialize))

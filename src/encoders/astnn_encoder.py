@@ -1,15 +1,13 @@
 import collections
 from typing import Dict, Any, Tuple, List, Optional
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
-from .ast_encoder import ASTEncoder, _try_to_queue_node, _get_tree_elements_seq
-from .utils import astnn_network
 from utils import data_pipeline
 from utils import tfutils
-from utils.tfutils import pool_sequence_embedding
-
+from .ast_encoder import ASTEncoder, _try_to_queue_node
+from .utils import astnn_network
 
 STATEMENTS = ['function_definition', 'if_statement', 'while_statement', 'do_statement', 'switch_statement',
               'compound_statement', 'for_statement']
@@ -59,8 +57,8 @@ def _get_tree_blocks(root: data_pipeline.TreeNode) -> List[data_pipeline.TreeNod
 
 
 def _linearize_and_split_tree_bfs(
-    root: data_pipeline.TreeNode,
-    max_nodes: int = -1) -> Tuple[List[List[data_pipeline.TreeNode]], List[List[List[int]]]]:
+        root: data_pipeline.TreeNode,
+        max_nodes: int = -1) -> Tuple[List[List[data_pipeline.TreeNode]], List[List[List[int]]]]:
     nodes: List[List[data_pipeline.TreeNode]] = []
     children: List[List[List[int]]] = []
     blocks = _get_tree_blocks(root)
@@ -72,7 +70,6 @@ def _linearize_and_split_tree_bfs(
         if max_nodes != -1 and nodes_queued >= max_nodes:
             break
     return nodes, children
-
 
 
 class ASTNNEncoder(ASTEncoder):
@@ -101,7 +98,7 @@ class ASTNNEncoder(ASTEncoder):
             node_types = self.embedding_layer(self.placeholders['node_type_ids'])
             children = self.placeholders['children']
             type_encoding = astnn_network.init_net(node_types, children, self.get_hyper('type_embedding_size'),
-                                            self.get_hyper('tree_encoder_size'))
+                                                   self.get_hyper('tree_encoder_size'))
         return type_encoding
 
     def _make_placeholders(self):
@@ -120,6 +117,7 @@ class ASTNNEncoder(ASTEncoder):
         node_types, children = _linearize_and_split_tree_bfs(
             data_to_load, hyperparameters[f'{encoder_label}_max_num_nodes']
         )
+
         def convert_and_pad(nodes_):
             n = len(nodes_)
             node_types = [node['type'] for node in nodes_]
@@ -137,7 +135,8 @@ class ASTNNEncoder(ASTEncoder):
         result_holder[f'{encoder_label}_children'] = children
         return True
 
-    def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any], is_train: bool) -> None:
+    def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any],
+                               is_train: bool) -> None:
         super().minibatch_to_feed_dict(batch_data, feed_dict, is_train)
         node_type_ids = batch_data['node_type_ids']
         children = batch_data['children']

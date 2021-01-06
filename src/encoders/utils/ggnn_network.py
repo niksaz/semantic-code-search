@@ -29,7 +29,6 @@ import tensorflow as tf
 
 
 class GGNN(tf.keras.layers.Layer):
-
     default_config = {
         'hidden_dim': 128,
         'dropout_rate': 0.1,

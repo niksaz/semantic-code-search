@@ -6,11 +6,11 @@ from typing import Dict, Any, List
 
 import numpy as np
 import tensorflow as tf
-
 from dpu_utils.mlutils import Vocabulary
+
+from utils import data_pipeline
 from utils.tfutils import pool_sequence_embedding
 from .masked_seq_encoder import MaskedSeqEncoder
-from utils import data_pipeline
 
 
 class PretrainedNBoWEncoder(MaskedSeqEncoder):
@@ -64,7 +64,7 @@ class PretrainedNBoWEncoder(MaskedSeqEncoder):
         final_metadata['common_tokens'] = token_counter.most_common(50)
         return final_metadata
 
-    def make_model(self, is_train: bool=False) -> tf.Tensor:
+    def make_model(self, is_train: bool = False) -> tf.Tensor:
         with tf.variable_scope("nbow_encoder"):
             self._make_placeholders()
 

@@ -29,6 +29,7 @@ SOFTWARE.
 described in Lili Mou et al. (2015) https://arxiv.org/pdf/1409.5718.pdf"""
 
 import math
+
 import tensorflow as tf
 
 
@@ -74,8 +75,8 @@ def conv_node(nodes, children, feature_size, output_size):
             tf.Variable(tf.truncated_normal([feature_size, output_size], stddev=std), name='Wl'),
             tf.Variable(tf.truncated_normal([feature_size, output_size], stddev=std), name='Wr'),
         )
-        init = tf.truncated_normal([output_size,], stddev=math.sqrt(2.0/feature_size))
-        #init = tf.zeros([output_size,])
+        init = tf.truncated_normal([output_size, ], stddev=math.sqrt(2.0 / feature_size))
+        # init = tf.zeros([output_size,])
         b_conv = tf.Variable(init, name='b_conv')
 
         with tf.name_scope('summaries'):
@@ -195,7 +196,7 @@ def eta_l(children, coef_t, coef_r):
         # has shape (batch_size x max_tree_size x max_children + 1)
         mask = tf.concat(
             [tf.zeros((batch_size, max_tree_size, 1)),
-                tf.minimum(children, tf.ones(tf.shape(children)))],
+             tf.minimum(children, tf.ones(tf.shape(children)))],
             axis=2,
             name='mask'
         )
@@ -280,8 +281,8 @@ def hidden_layer(pooled, input_size, output_size):
             name='weights'
         )
 
-        init = tf.truncated_normal([output_size,], stddev=math.sqrt(2.0/input_size))
-        #init = tf.zeros([output_size,])
+        init = tf.truncated_normal([output_size, ], stddev=math.sqrt(2.0 / input_size))
+        # init = tf.zeros([output_size,])
         biases = tf.Variable(init, name='biases')
 
         with tf.name_scope('summaries'):

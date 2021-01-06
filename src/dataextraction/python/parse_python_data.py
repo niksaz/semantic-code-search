@@ -14,8 +14,8 @@ Options:
     --debug                    Enable debug routines. [default: False]
 
 """
-import re
 import os
+import re
 from multiprocessing import Pool
 from typing import List, NamedTuple
 
@@ -28,7 +28,6 @@ from tqdm import tqdm
 from dataextraction.utils import tokenize_docstring_from_string
 from utils.pkldf2jsonl import chunked_save_df_to_jsonl
 
-
 IS_WHITESPACE_REGEX = re.compile(r'\s+')
 
 
@@ -38,10 +37,10 @@ class ParsedCode(NamedTuple):
 
 
 def tokenize_python_from_string(code: str,
-                                func_only: bool=True,
-                                report_errors: bool=False,
-                                only_ids: bool=False,
-                                add_keywords: bool=True) -> ParsedCode:
+                                func_only: bool = True,
+                                report_errors: bool = False,
+                                only_ids: bool = False,
+                                add_keywords: bool = True) -> ParsedCode:
     """
     Tokenize Python code given a string.
 
@@ -67,7 +66,7 @@ def tokenize_python_from_string(code: str,
         # parse arbitrary snippets of code that are not functions if func_only = False
         if not func_only:
             func_nodes = [parsed_ast]
-        
+
         for func_node in func_nodes:  # There should only be one, but we can process more...
             doc_node = func_node.get_doc_node()
             leaf_node = func_node.get_first_leaf()
@@ -87,7 +86,7 @@ def tokenize_python_from_string(code: str,
                     break
 
                 # Third, record code tokens:
-                if not(IS_WHITESPACE_REGEX.match(leaf_node.value)):
+                if not (IS_WHITESPACE_REGEX.match(leaf_node.value)):
                     if only_ids:
                         if leaf_node.type == 'name':
                             code_tokens.append(leaf_node.value)
@@ -105,7 +104,7 @@ def tokenize_python_from_string(code: str,
         return ParsedCode(code_tokens=[], comment_tokens=[])
 
 
-def download_files_into_pandas(i: int=10) -> pd.DataFrame:
+def download_files_into_pandas(i: int = 10) -> pd.DataFrame:
     """Get files from Google Cloud Platform, there are 10 files.
 
     Args:
@@ -120,7 +119,9 @@ def download_files_into_pandas(i: int=10) -> pd.DataFrame:
         success = False
         while not success:
             try:
-                frame = pd.read_csv(f'https://storage.googleapis.com/kubeflow-examples/code_search_new/python_raw_v2/00000000000{i}.csv', encoding='utf-8')
+                frame = pd.read_csv(
+                    f'https://storage.googleapis.com/kubeflow-examples/code_search_new/python_raw_v2/00000000000{i}.csv',
+                    encoding='utf-8')
                 frames.append(frame)
                 success = True
             except Exception as e:
@@ -157,7 +158,7 @@ def load_files_into_pandas(input_folder: str) -> pd.DataFrame:
     return df
 
 
-def parse_raw_data_into_function_list(blob, require_docstring: bool=True):
+def parse_raw_data_into_function_list(blob, require_docstring: bool = True):
     """Extract per-function data from a given code blob.
 
     Filters out undesirable function types. Keep only the first line of the docstring, and remove all internal comments from
@@ -199,10 +200,13 @@ def parse_raw_data_into_function_list(blob, require_docstring: bool=True):
                     trimmed_lines.append(line[len(def_prefix):])
             function_code = '\n'.join(trimmed_lines)
 
-            should_use_function = not (re.search(r'(__.+__)|(.*test.*)|(.*Test.*)', function_name) or  # skip __*__ methods and test code
+            should_use_function = not (re.search(r'(__.+__)|(.*test.*)|(.*Test.*)',
+                                                 function_name) or  # skip __*__ methods and test code
                                        re.search(r'NotImplementedException|@abstractmethod', function_code) or
-                                       len(function_code.split('\n')) <= 2 or  # should have more than 1 line of code (the declaration is one line)
-                                       (len(first_docstring_line.split()) <= 2) and require_docstring)  # docstring should have at least 3 words.
+                                       len(function_code.split(
+                                           '\n')) <= 2 or  # should have more than 1 line of code (the declaration is one line)
+                                       (len(
+                                           first_docstring_line.split()) <= 2) and require_docstring)  # docstring should have at least 3 words.
 
             if should_use_function:
                 parsed_data_list.append({'code': function_code,
@@ -244,7 +248,8 @@ def run(args):
     assert len(function_data) == raw_code_data_df.shape[0], \
         f'Row count mismatch. `raw_code_data_df` has {raw_code_data_df.shape[0]} rows; `function_data` has {len(function_data)} rows.'
     raw_code_data_df['function_data'] = function_data
-    print(f'Split {raw_code_data_df.shape[0]} blobs into {sum(len(fun_data) for fun_data in function_data)} documented individual functions.')
+    print(
+        f'Split {raw_code_data_df.shape[0]} blobs into {sum(len(fun_data) for fun_data in function_data)} documented individual functions.')
 
     # Flatten function data out:
     # TODO: We should also have access to the SHA of the objects here.

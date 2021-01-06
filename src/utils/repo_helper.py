@@ -1,8 +1,10 @@
-from subprocess import check_call
-from pathlib import Path
-from typing import List
 from json import loads
+from pathlib import Path
+from subprocess import check_call
+from typing import List
+
 from requests import get
+
 
 class Repo():
     """
@@ -22,7 +24,7 @@ class Repo():
         self.metadata = self.__get_metadata(org, repo_name)
         assert Path(dest_path).is_dir(), f'Argument dest_path should be an existing directory: {dest_path}'
         self.dest_path = Path(dest_path)
-        self.repo_save_folder = self.dest_path/self.metadata['full_name']
+        self.repo_save_folder = self.dest_path / self.metadata['full_name']
 
     def __get_metadata(self, org: str, repo_name: str) -> dict:
         "Validates github org and repo_name, and returns metadata about the repo."
@@ -34,7 +36,7 @@ class Repo():
             raise Exception(f'Cannot find repository {org}/{repo_name}')
         return info
 
-    def clone(self, refresh: bool=True) -> Path:
+    def clone(self, refresh: bool = True) -> Path:
         "Will clone a repo (default branch only) into the desired path, or if already exists will optionally pull latest code."
         default_branch = self.metadata['default_branch']
         clone_url = self.metadata['clone_url']
@@ -49,7 +51,7 @@ class Repo():
             print(f'Pulling latest code from repo:\n {cmd}')
             check_call(cmd, shell=True)
 
-    def get_filenames_with_extension(self, extension: str='.py') -> List[Path]:
+    def get_filenames_with_extension(self, extension: str = '.py') -> List[Path]:
         "Return a list of filenames in the repo that end in the supplied extension."
         files = self.repo_save_folder.glob('**/*')
         return [f for f in files if f.is_file() and f.name.endswith(extension)]

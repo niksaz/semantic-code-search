@@ -2,8 +2,8 @@ from typing import Dict, Any
 
 import tensorflow as tf
 
-from .masked_seq_encoder import MaskedSeqEncoder
 from utils.tfutils import get_activation, pool_sequence_embedding
+from .masked_seq_encoder import MaskedSeqEncoder
 
 
 class ConvolutionSeqEncoder(MaskedSeqEncoder):
@@ -15,7 +15,7 @@ class ConvolutionSeqEncoder(MaskedSeqEncoder):
                           '1dcnn_add_residual_connections': True,
                           '1dcnn_activation': 'tanh',
                           '1dcnn_pool_mode': 'weighted_mean',
-                         }
+                          }
         hypers = super().get_default_hyperparameters()
         hypers.update(encoder_hypers)
         return hypers
@@ -27,7 +27,7 @@ class ConvolutionSeqEncoder(MaskedSeqEncoder):
     def output_representation_size(self):
         return self.get_hyper('1dcnn_layer_list')[-1]
 
-    def make_model(self, is_train: bool=False) -> tf.Tensor:
+    def make_model(self, is_train: bool = False) -> tf.Tensor:
         with tf.variable_scope("1dcnn_encoder"):
             self._make_placeholders()
 

@@ -27,14 +27,16 @@ Example:
 
 """
 
-from docopt import docopt
 import hashlib
-import pandas as pd
-from utils.pkldf2jsonl import chunked_save_df_to_jsonl
-from dpu_utils.utils import RichPath, run_and_debug
-from dpu_utils.codeutils.deduplication import DuplicateDetector
 import os
+
+import pandas as pd
+from docopt import docopt
+from dpu_utils.codeutils.deduplication import DuplicateDetector
+from dpu_utils.utils import RichPath, run_and_debug
 from tqdm import tqdm
+
+from utils.pkldf2jsonl import chunked_save_df_to_jsonl
 
 
 def jsonl_to_df(input_folder: RichPath) -> pd.DataFrame:
@@ -46,7 +48,8 @@ def jsonl_to_df(input_folder: RichPath) -> pd.DataFrame:
     assert files, 'There were no jsonl.gz files in the specified directory.'
     print(f'reading files from {input_folder.path}')
     for f in tqdm(files, total=len(files)):
-        dfs.append(pd.DataFrame(list(f.read_as_jsonl(error_handling=lambda m,e: print(f'Error while loading {m} : {e}')))))
+        dfs.append(
+            pd.DataFrame(list(f.read_as_jsonl(error_handling=lambda m, e: print(f'Error while loading {m} : {e}')))))
     return pd.concat(dfs)
 
 
@@ -72,16 +75,17 @@ def remove_duplicate_code_df(df: pd.DataFrame) -> pd.DataFrame:
     return df[filter_mask & exclusion_mask]
 
 
-def label_folds(df: pd.DataFrame, train_ratio: float, valid_ratio: float, test_ratio: float, holdout_ratio: float) -> pd.DataFrame:
+def label_folds(df: pd.DataFrame, train_ratio: float, valid_ratio: float, test_ratio: float,
+                holdout_ratio: float) -> pd.DataFrame:
     "Adds a partition column to DataFrame with values: {train, valid, test, holdout}."
-    assert abs(train_ratio + valid_ratio + test_ratio + holdout_ratio - 1) < 1e-5,  'Ratios must sum up to 1.'
+    assert abs(train_ratio + valid_ratio + test_ratio + holdout_ratio - 1) < 1e-5, 'Ratios must sum up to 1.'
     # code in the same file will always go to the same split
     df['hash_key'] = df.apply(lambda x: f'{x.repo}:{x.path}', axis=1)
-    df['hash_val'] = df['hash_key'].apply(lambda x: int(hashlib.md5(x.encode()).hexdigest(), 16) % (2**16))
+    df['hash_val'] = df['hash_key'].apply(lambda x: int(hashlib.md5(x.encode()).hexdigest(), 16) % (2 ** 16))
 
-    train_bound = int(2**16 * train_ratio)
-    valid_bound = train_bound + int(2**16 * valid_ratio)
-    test_bound = valid_bound + int(2**16 * test_ratio)
+    train_bound = int(2 ** 16 * train_ratio)
+    valid_bound = train_bound + int(2 ** 16 * valid_ratio)
+    test_bound = valid_bound + int(2 ** 16 * test_ratio)
 
     def label_splits(hash_val: int) -> str:
         if hash_val <= train_bound:
@@ -104,7 +108,6 @@ def label_folds(df: pd.DataFrame, train_ratio: float, valid_ratio: float, test_r
 
 
 def run(args):
-
     azure_info_path = args.get('--azure-info', None)
     input_path = RichPath.create(args['INPUT_FILENAME'], azure_info_path)
     output_folder = RichPath.create(args['OUTPUT_FOLDER'], azure_info_path)

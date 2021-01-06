@@ -14,13 +14,12 @@ Options:
     --language LANG            The code language to use. Only when --code option is given. [default: python]
     --debug                    Enable debug routines. [default: False]
 """
+import matplotlib.pyplot as plt
+import numpy as np
 from docopt import docopt
 from dpu_utils.utils import RichPath, run_and_debug
-from sklearn.manifold import TSNE
-import numpy as np
 from scipy.spatial.distance import pdist
-import matplotlib.pyplot as plt
-
+from sklearn.manifold import TSNE
 
 import model_restore_helper
 from utils.visutils import square_to_condensed
@@ -53,7 +52,7 @@ def run(arguments) -> None:
 
         plt.scatter(emb_2d[:, 0], emb_2d[:, 1])
         for i in range(len(elements)):
-            plt.annotate(elements[i], xy=(emb_2d[i,0], emb_2d[i,1]))
+            plt.annotate(elements[i], xy=(emb_2d[i, 0], emb_2d[i, 1]))
 
         plt.show()
     elif arguments['print-nns']:
@@ -73,8 +72,6 @@ def run(arguments) -> None:
                 print(f'{element} --> ' + ', '.join(f'{elements[n]} ({distance_from_i[n]:.2f})' for n in nns))
             except:
                 print('Error printing token for nearest neighbors pair.')
-
-
 
 
 if __name__ == '__main__':

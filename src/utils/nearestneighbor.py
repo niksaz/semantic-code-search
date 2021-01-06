@@ -17,18 +17,16 @@ import json
 from itertools import chain
 from typing import Any, Dict, List
 
+import numpy as np
 from docopt import docopt
 from dpu_utils.utils import RichPath, run_and_debug
-import numpy as np
 from more_itertools import take
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
+from pygments.lexers import get_lexer_by_name
 from scipy.spatial.distance import pdist
 
-from pygments import highlight
-from pygments.lexers import get_lexer_by_name
-from pygments.formatters import TerminalFormatter
-
 import model_restore_helper
-
 # Condensed to square from
 # http://stackoverflow.com/questions/13079563/how-does-condensed-distance-matrix-work-pdist
 from utils.visutils import square_to_condensed
@@ -38,6 +36,7 @@ def to_string(code: str, language: str) -> str:
     lexer = get_lexer_by_name(language, stripall=True)
     formatter = TerminalFormatter(linenos=True)
     return highlight(code, lexer, formatter)
+
 
 def run(arguments) -> None:
     azure_info_path = arguments.get('--azure-info', None)
@@ -64,7 +63,6 @@ def run(arguments) -> None:
     else:
         assert num_elements_to_take > 0
         data = take(num_elements_to_take, data)
-
 
     num_nns = int(arguments['--num-nns'])
 
@@ -104,7 +102,8 @@ def run(arguments) -> None:
 
         for j in range(num_nns):
             print()
-            print(f'Nearest Neighbour {j+1}: {filtered_data[nns[j]]["repo"]}:{filtered_data[nns[j]]["path"]}:{filtered_data[nns[j]]["lineno"]} (distance {distance_from_i[nns[j]]})')
+            print(
+                f'Nearest Neighbour {j + 1}: {filtered_data[nns[j]]["repo"]}:{filtered_data[nns[j]]["path"]}:{filtered_data[nns[j]]["lineno"]} (distance {distance_from_i[nns[j]]})')
             print(to_string(filtered_data[nns[j]]['original_string'], language=filtered_data[nns[j]]['language']))
 
 

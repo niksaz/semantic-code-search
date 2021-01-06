@@ -4,16 +4,13 @@
 
 """ An encoder which learns byte pair encodings for white-space separated text.  Can tokenize, encode, and decode. """
 import typing
-from typing import Optional
 from collections import Counter
-
-import toolz
+from typing import Optional
 
 try:
     from typing import Dict, Iterable, Callable, List, Any, Iterator
 except ImportError:
     pass
-
 
 DEFAULT_EOW = '__eow'
 DEFAULT_SOW = '__sow'
@@ -26,8 +23,8 @@ class BpeVocabulary(typing.Sized):
     Encodes white-space separated text using byte-pair encoding.  See https://arxiv.org/abs/1508.07909 for details.
     """
 
-    def __init__(self, vocab_size: int=8192, pct_bpe: float=0.2,
-                 ngram_min: int=2, ngram_max: int=8, required_tokens: Optional[Iterable[str]]=None, strict=True,
+    def __init__(self, vocab_size: int = 8192, pct_bpe: float = 0.2,
+                 ngram_min: int = 2, ngram_max: int = 8, required_tokens: Optional[Iterable[str]] = None, strict=True,
                  EOW=DEFAULT_EOW, SOW=DEFAULT_SOW, UNK=DEFAULT_UNK, PAD=DEFAULT_PAD):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
@@ -70,7 +67,7 @@ class BpeVocabulary(typing.Sized):
                 token_offsets += [length]
             for ngram_size in range(self.ngram_min, min(self.ngram_max, len(sub_tokens)) + 1):
                 for i in range(len(sub_tokens) - ngram_size + 1):
-                    bp_counts[joined_tokens[token_offsets[i]:token_offsets[i+ngram_size]]] += count
+                    bp_counts[joined_tokens[token_offsets[i]:token_offsets[i + ngram_size]]] += count
 
             yield bp_counts
 
@@ -82,8 +79,8 @@ class BpeVocabulary(typing.Sized):
     def learn_word_vocab(self, word_counts: typing.Counter[str]) -> Dict[str, int]:
         """ Build vocab from self.word_vocab_size most common tokens in provided sentences """
         for token in set(self.required_tokens or []):
-            word_counts[token] = int(2**31)
-        word_counts[self.PAD] = int(2**32)  # Make sure that PAD gets id=0
+            word_counts[token] = int(2 ** 31)
+        word_counts[self.PAD] = int(2 ** 32)  # Make sure that PAD gets id=0
         sorted_word_counts = sorted(word_counts.items(), key=lambda p: -p[1])
         return {word: idx for idx, (word, count) in enumerate(sorted_word_counts[:self.word_vocab_size])}
 
@@ -91,7 +88,7 @@ class BpeVocabulary(typing.Sized):
         """ Learns a vocab of byte pair encodings """
         vocab = Counter()  # type: typing.Counter
         for token in {self.SOW, self.EOW}:
-            vocab[token] = int(2**63)
+            vocab[token] = int(2 ** 63)
         for idx, byte_pair_count in enumerate(self.byte_pair_counts(words)):
             vocab.update(byte_pair_count)
             if (idx + 1) % 10000 == 0:
@@ -107,7 +104,7 @@ class BpeVocabulary(typing.Sized):
         self.word_vocab = self.learn_word_vocab(word_counts)
 
         remaining_words = Counter({word: count for word, count in word_counts.items()
-                           if word not in self.word_vocab})
+                                   if word not in self.word_vocab})
         self.bpe_vocab = self.learn_bpe_vocab(remaining_words.elements())
 
         self.inverse_word_vocab = {idx: token for token, idx in self.word_vocab.items()}
@@ -155,7 +152,7 @@ class BpeVocabulary(typing.Sized):
 
         return tokens
 
-    def transform(self, sentences: Iterable[List[str]], reverse=False, fixed_length=None)-> Iterable[List[str]]:
+    def transform(self, sentences: Iterable[List[str]], reverse=False, fixed_length=None) -> Iterable[List[str]]:
         """ Turns tokens into vocab idxs """
         direction = -1 if reverse else 1
         for sentence in sentences:

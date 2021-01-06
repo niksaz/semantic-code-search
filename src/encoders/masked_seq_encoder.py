@@ -1,17 +1,15 @@
-from typing import Dict, Any, Iterable, Optional
+from typing import Dict, Any
 
-import numpy as np
 import tensorflow as tf
 
+from utils.tfutils import write_to_feed_dict
 from .seq_encoder import SeqEncoder
-from utils.tfutils import write_to_feed_dict, pool_sequence_embedding
 
 
 class MaskedSeqEncoder(SeqEncoder):
     @classmethod
     def get_default_hyperparameters(cls) -> Dict[str, Any]:
-        encoder_hypers = {
-                         }
+        encoder_hypers = {}
         hypers = super().get_default_hyperparameters()
         hypers.update(encoder_hypers)
         return hypers
@@ -34,7 +32,8 @@ class MaskedSeqEncoder(SeqEncoder):
         batch_data['tokens'] = []
         batch_data['tokens_mask'] = []
 
-    def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any], is_train: bool) -> None:
+    def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any],
+                               is_train: bool) -> None:
         super().minibatch_to_feed_dict(batch_data, feed_dict, is_train)
         write_to_feed_dict(feed_dict, self.placeholders['tokens'], batch_data['tokens'])
         write_to_feed_dict(feed_dict, self.placeholders['tokens_mask'], batch_data['tokens_mask'])

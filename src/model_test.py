@@ -1,18 +1,18 @@
+import logging
 from itertools import chain
 from typing import Optional, List, Dict, Any, NamedTuple, Iterable, Tuple
-import logging
 
+import numpy as np
+from dpu_utils.codeutils import split_identifier_into_parts
 from dpu_utils.mlutils import Vocabulary
 from dpu_utils.utils import RichPath
-import numpy as np
 from more_itertools import chunked
 from scipy.spatial.distance import cdist
-import wandb
 
 import model_restore_helper
-from utils import data_pipeline
+import wandb
 from models.model import get_data_files_from_directory, Model
-from dpu_utils.codeutils import split_identifier_into_parts
+from utils import data_pipeline
 
 
 def compute_ranks(src_representations: np.ndarray,
@@ -26,8 +26,8 @@ def compute_ranks(src_representations: np.ndarray,
 
 
 class MrrSearchTester:
-    def __init__(self, model_path: RichPath, test_batch_size: int=1000, distance_metric: str='cosine',
-                 quiet: bool=False, hypers_override: Optional[Dict[str, Any]]=None) -> None:
+    def __init__(self, model_path: RichPath, test_batch_size: int = 1000, distance_metric: str = 'cosine',
+                 quiet: bool = False, hypers_override: Optional[Dict[str, Any]] = None) -> None:
         self.__model = model_restore_helper.restore(path=model_path,
                                                     is_train=False,
                                                     hyper_overrides=hypers_override)
@@ -40,10 +40,10 @@ class MrrSearchTester:
         return self.__model
 
     @property
-    def test_batch_size(self)-> int:
+    def test_batch_size(self) -> int:
         return self.__test_batch_size
 
-    def update_test_batch_size(self, test_batch_size: int)-> None:
+    def update_test_batch_size(self, test_batch_size: int) -> None:
         self.__test_batch_size = test_batch_size
 
     QueryResult = NamedTuple('QueryResult', [
@@ -53,9 +53,9 @@ class MrrSearchTester:
     ])
 
     def evaluate(self, data: List[Dict[str, Any]], data_label_name: str,
-                 error_log: Optional[List['MrrSearchTester.QueryResult']]=None,
-                 error_log_rank_threshold: int=10,
-                 filter_language: Optional[str]=None)-> float:
+                 error_log: Optional[List['MrrSearchTester.QueryResult']] = None,
+                 error_log_rank_threshold: int = 10,
+                 filter_language: Optional[str] = None) -> float:
         """
         Evaluate the MRR on the given dataset.
 
@@ -80,7 +80,8 @@ class MrrSearchTester:
         data = data[idxs]
 
         if len(data) < self.__test_batch_size:
-            logging.warning(f'the size of the total data {len(data):,} is less than the batch_size: {self.__test_batch_size:,} adjusting batch size to equal data size.')
+            logging.warning(
+                f'the size of the total data {len(data):,} is less than the batch_size: {self.__test_batch_size:,} adjusting batch size to equal data size.')
             self.update_test_batch_size(len(data))
 
         def self_or_random_representation(representation: Optional[np.ndarray]) -> np.ndarray:
@@ -94,7 +95,8 @@ class MrrSearchTester:
         max_samples = 50
         full_batch_len = len(data) // self.__test_batch_size * self.__test_batch_size
         examples_sample = np.zeros(len(data), dtype=bool)
-        examples_sample[np.random.choice(np.arange(full_batch_len), replace=False, size=min(full_batch_len, max_samples))] = True
+        examples_sample[
+            np.random.choice(np.arange(full_batch_len), replace=False, size=min(full_batch_len, max_samples))] = True
         examples_table = []
 
         sum_mrr = 0.0
@@ -143,7 +145,7 @@ class MrrSearchTester:
             sum_mrr += np.mean(1.0 / ranks)
 
             if error_log is not None:
-                batch_sample_idxs = idxs[batch_idx*self.__test_batch_size:(batch_idx+1)*self.__test_batch_size]
+                batch_sample_idxs = idxs[batch_idx * self.__test_batch_size:(batch_idx + 1) * self.__test_batch_size]
                 for i in range(len(ranks)):
                     if ranks[i] >= error_log_rank_threshold:
                         result = MrrSearchTester.QueryResult(
@@ -157,7 +159,8 @@ class MrrSearchTester:
                 print(f'Tested on {batch_idx + 1} batches so far.')
 
         if wandb.run and examples_table:
-            wandb.log({"Examples-%s" % examples_table_name: wandb.Table(columns=examples_table_columns, rows=examples_table)})
+            wandb.log(
+                {"Examples-%s" % examples_table_name: wandb.Table(columns=examples_table_columns, rows=examples_table)})
 
         eval_mrr = sum_mrr / num_batches
         log_label = f'{data_label_name} MRR (bs={self.__test_batch_size:,})'
@@ -189,7 +192,8 @@ def filter_untokenizable_code(data: Iterable[Dict[str, Any]]) -> List[Dict[str, 
     """Filter out data where field code_tokens is empty."""
     return [d for d in data if d['code_tokens']]
 
-def log_row_count_diff(original_data: Iterable[Any], filtered_data:Iterable[Any], label: str) -> None:
+
+def log_row_count_diff(original_data: Iterable[Any], filtered_data: Iterable[Any], label: str) -> None:
     """Compute the difference between row counts and log appropriately."""
     original_row_count = len(list(original_data))
     filtered_row_count = len(list(filtered_data))
@@ -198,13 +202,13 @@ def log_row_count_diff(original_data: Iterable[Any], filtered_data:Iterable[Any]
     assert filtered_row_count <= original_row_count, f'filtered_data {filtered_row_count:,} has a larger row count than original_data {original_row_count:,}.'
 
     pcnt_parsed = filtered_row_count / original_row_count
-    print(f'{label}: parsed {filtered_row_count:,} out of {original_row_count:,} rows. ({pcnt_parsed*100:.1f}%)')
+    print(f'{label}: parsed {filtered_row_count:,} out of {original_row_count:,} rows. ({pcnt_parsed * 100:.1f}%)')
     if wandb.run:
         wandb.run.summary[f'{label} Parsed Pct'] = pcnt_parsed
 
 
-def get_dataset_from(data_dirs: List[RichPath], 
-                     use_func_names: bool=False, 
+def get_dataset_from(data_dirs: List[RichPath],
+                     use_func_names: bool = False,
                      max_files_per_dir: Optional[int] = None) -> List[Dict[str, Any]]:
     data_files = sorted(get_data_files_from_directory(data_dirs, max_files_per_dir))
     data = list(chain(*chain(list(
@@ -222,14 +226,13 @@ def get_dataset_from(data_dirs: List[RichPath],
     return data
 
 
-def compute_evaluation_metrics(model_path: RichPath, arguments, 
+def compute_evaluation_metrics(model_path: RichPath, arguments,
                                azure_info_path: str,
-                               valid_data_dirs: List[RichPath], 
+                               valid_data_dirs: List[RichPath],
                                test_data_dirs: List[RichPath],
                                max_files_per_dir: Optional[int] = None):
-
     tester = MrrSearchTester(model_path, test_batch_size=int(arguments['--test-batch-size']),
-                                  distance_metric=arguments['--distance-metric'])
+                             distance_metric=arguments['--distance-metric'])
     test_data = get_dataset_from(test_data_dirs, max_files_per_dir=max_files_per_dir)
     # Get all languages in test_data
     dataset_languages = set(d['language'] for d in test_data)
@@ -240,18 +243,22 @@ def compute_evaluation_metrics(model_path: RichPath, arguments,
     for language_name, filter_language in evaluation_sets:
         if filter_language and language_name not in tester.model.per_code_language_metadata:
             continue
-        mrr = tester.evaluate(test_data, f'Test-{language_name}', filter_language=language_name if filter_language else None)
+        mrr = tester.evaluate(test_data, f'Test-{language_name}',
+                              filter_language=language_name if filter_language else None)
         if language_name == "All":
             final_eval['Primary MRR'] = mrr
 
         # run test using the function name as the query
-        mrr = tester.evaluate(get_dataset_from(test_data_dirs, use_func_names=True, max_files_per_dir=max_files_per_dir), f'FuncNameTest-{language_name}',
-                              filter_language=language_name if filter_language else None)
+        mrr = tester.evaluate(
+            get_dataset_from(test_data_dirs, use_func_names=True, max_files_per_dir=max_files_per_dir),
+            f'FuncNameTest-{language_name}',
+            filter_language=language_name if filter_language else None)
         if language_name == "All":
             final_eval['FuncName MRR'] = mrr
 
         # run the test procedure on the validation set (with same batch size as test, so that MRR is comparable)
-        tester.evaluate(get_dataset_from(valid_data_dirs, max_files_per_dir=max_files_per_dir), f'Validation-{language_name}',
+        tester.evaluate(get_dataset_from(valid_data_dirs, max_files_per_dir=max_files_per_dir),
+                        f'Validation-{language_name}',
                         filter_language=language_name if filter_language else None)
 
     if wandb.run and final_eval:

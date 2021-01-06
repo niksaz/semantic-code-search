@@ -40,6 +40,7 @@ def run(arguments):
     test.compute_evaluation_metrics(RichPath.create(arguments['MODEL_PATH'], azure_info_path=azure_info_path),
                                     arguments, azure_info_path, valid_data_dirs, test_data_dirs)
 
+
 if __name__ == '__main__':
     args = docopt(__doc__)
     run_and_debug(lambda: run(args), args['--debug'])

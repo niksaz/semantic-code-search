@@ -1,34 +1,33 @@
-from collections import Counter
-import numpy as np
-from typing import Dict, Any, List, Iterable, Optional, Tuple
 import random
 import re
+from collections import Counter
+from typing import Dict, Any, List, Iterable, Optional, Tuple
 
-from utils.bpevocabulary import BpeVocabulary
-from utils.tfutils import convert_and_pad_token_sequence
-
+import numpy as np
 import tensorflow as tf
 from dpu_utils.codeutils import split_identifier_into_parts
 from dpu_utils.mlutils import Vocabulary
 
+from utils.bpevocabulary import BpeVocabulary
+from utils.tfutils import convert_and_pad_token_sequence
 from .encoder import Encoder, QueryType
 
 
 class SeqEncoder(Encoder):
     @classmethod
     def get_default_hyperparameters(cls) -> Dict[str, Any]:
-        encoder_hypers = { 'token_vocab_size': 10000,
-                           'token_vocab_count_threshold': 10,
-                           'token_embedding_size': 128,
+        encoder_hypers = {'token_vocab_size': 10000,
+                          'token_vocab_count_threshold': 10,
+                          'token_embedding_size': 128,
 
-                           'use_subtokens': False,
-                           'mark_subtoken_end': False,
+                          'use_subtokens': False,
+                          'mark_subtoken_end': False,
 
-                           'max_num_tokens': 200,
+                          'max_num_tokens': 200,
 
-                           'use_bpe': True,
-                           'pct_bpe': 0.5
-                         }
+                          'use_bpe': True,
+                          'pct_bpe': 0.5
+                          }
         hypers = super().get_default_hyperparameters()
         hypers.update(encoder_hypers)
         return hypers
@@ -93,13 +92,14 @@ class SeqEncoder(Encoder):
 
     @classmethod
     def load_metadata_from_sample(cls, data_to_load: Iterable[str], raw_metadata: Dict[str, Any],
-                                  use_subtokens: bool=False, mark_subtoken_end: bool=False) -> None:
+                                  use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
         if use_subtokens:
             data_to_load = cls._to_subtoken_stream(data_to_load, mark_subtoken_end=mark_subtoken_end)
         raw_metadata['token_counter'].update(data_to_load)
 
     @classmethod
-    def finalise_metadata(cls, encoder_label: str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def finalise_metadata(cls, encoder_label: str, hyperparameters: Dict[str, Any],
+                          raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
         final_metadata = super().finalise_metadata(encoder_label, hyperparameters, raw_metadata_list)
         merged_token_counter = Counter()
         for raw_metadata in raw_metadata_list:
@@ -112,8 +112,10 @@ class SeqEncoder(Encoder):
             token_vocabulary.fit(merged_token_counter)
         else:
             token_vocabulary = Vocabulary.create_vocabulary(tokens=merged_token_counter,
-                                                            max_size=hyperparameters['%s_token_vocab_size' % encoder_label],
-                                                            count_threshold=hyperparameters['%s_token_vocab_count_threshold' % encoder_label])
+                                                            max_size=hyperparameters[
+                                                                '%s_token_vocab_size' % encoder_label],
+                                                            count_threshold=hyperparameters[
+                                                                '%s_token_vocab_count_threshold' % encoder_label])
 
         final_metadata['token_vocab'] = token_vocabulary
         # Save the most common tokens for use in data augmentation:
@@ -174,7 +176,7 @@ class SeqEncoder(Encoder):
 
         return True
 
-    def extend_minibatch_by_sample(self, batch_data: Dict[str, Any], sample: Dict[str, Any], is_train: bool=False,
+    def extend_minibatch_by_sample(self, batch_data: Dict[str, Any], sample: Dict[str, Any], is_train: bool = False,
                                    query_type: QueryType = QueryType.DOCSTRING.value) -> bool:
         """
         Implements various forms of data augmentation.
@@ -193,19 +195,25 @@ class SeqEncoder(Encoder):
             total_length = len(current_sample['tokens'])
             length_without_padding = current_sample['tokens_lengths']
             # Generate a list of places in which to insert tokens:
-            insert_indices = np.array([random.uniform(0., 1.) for _ in range(length_without_padding)])  # don't allow insertions in the padding
-            insert_indices = insert_indices < self.hyperparameters['query_random_token_frequency']  # insert at the correct frequency
+            insert_indices = np.array([random.uniform(0., 1.) for _ in
+                                       range(length_without_padding)])  # don't allow insertions in the padding
+            insert_indices = insert_indices < self.hyperparameters[
+                'query_random_token_frequency']  # insert at the correct frequency
             insert_indices = np.flatnonzero(insert_indices)
             if len(insert_indices) > 0:
                 # Generate the random tokens to add:
                 tokens_to_add = [random.randrange(0, len(self.metadata['common_tokens']))
-                                 for _ in range(len(insert_indices))]  # select one of the most common tokens for each location
-                tokens_to_add = [self.metadata['common_tokens'][token][0] for token in tokens_to_add]  # get the word corresponding to the token we're adding
-                tokens_to_add = [self.metadata['token_vocab'].get_id_or_unk(token) for token in tokens_to_add]  # get the index within the vocab of the token we're adding
+                                 for _ in
+                                 range(len(insert_indices))]  # select one of the most common tokens for each location
+                tokens_to_add = [self.metadata['common_tokens'][token][0] for token in
+                                 tokens_to_add]  # get the word corresponding to the token we're adding
+                tokens_to_add = [self.metadata['token_vocab'].get_id_or_unk(token) for token in
+                                 tokens_to_add]  # get the index within the vocab of the token we're adding
                 # Efficiently insert the added tokens, leaving the total length the same:
                 to_insert = 0
                 output_query = np.zeros(total_length, dtype=int)
-                for idx in range(min(length_without_padding, total_length - len(insert_indices))):  # iterate only through the beginning of the array where changes are being made
+                for idx in range(min(length_without_padding, total_length - len(
+                        insert_indices))):  # iterate only through the beginning of the array where changes are being made
                     if to_insert < len(insert_indices) and idx == insert_indices[to_insert]:
                         output_query[idx + to_insert] = tokens_to_add[to_insert]
                         to_insert += 1

@@ -2,9 +2,8 @@ from typing import List, Tuple, Dict, Any, Optional, Union
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.ops.init_ops import Initializer
-
 from dpu_utils.mlutils import Vocabulary
+from tensorflow.python.ops.init_ops import Initializer
 
 from utils.bpevocabulary import BpeVocabulary
 
@@ -63,7 +62,7 @@ def write_to_feed_dict(feed_dict: Dict[tf.Tensor, Any], placeholder, val) -> Non
 
 
 class NoisyIdentityInitializer(Initializer):
-    def __init__(self, noise: float=1e-1):
+    def __init__(self, noise: float = 1e-1):
         self.__noise = noise
         self.__identity_initializer = tf.initializers.identity()
         self.__noise_initializer = tf.initializers.random_uniform(minval=-self.__noise, maxval=self.__noise)
@@ -99,6 +98,7 @@ def get_activation(activation_fun: Optional[str]):
         def gelu(input_tensor):
             cdf = 0.5 * (1.0 + tf.erf(input_tensor / tf.sqrt(2.0)))
             return input_tensor * cdf
+
         return gelu
     else:
         raise ValueError("Unknown activation function '%s'!" % activation_fun)

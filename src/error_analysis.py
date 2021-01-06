@@ -21,22 +21,21 @@ Options:
 """
 import io
 import json
+from random import sample
 from typing import List, Dict, Any, Optional
-from tqdm import tqdm
 
-from pygments import highlight
-from pygments.lexers import get_lexer_by_name
-from pygments.formatters import HtmlFormatter
 from docopt import docopt
 from dpu_utils.utils import run_and_debug, RichPath
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
+from tqdm import tqdm
 
 import model_test
 from model_test import expand_data_path, MrrSearchTester
-from random import sample
-
 
 ## Default Bootstrap headers
-HEADER=f"""
+HEADER = f"""
 <!doctype html>
 <html lang="en">
   <head>
@@ -55,21 +54,22 @@ HEADER=f"""
   </head>
   <body>
 """
-FOOTER="""
+FOOTER = """
 </body></html>
 """
 
-def to_highlighted_html(code:str, language: str) -> str:
+
+def to_highlighted_html(code: str, language: str) -> str:
     lexer = get_lexer_by_name(language, stripall=True)
     formatter = HtmlFormatter(linenos=True)
     return highlight(code, lexer, formatter)
 
+
 def generate_html_error_report(tester: MrrSearchTester,
-                               data:  List[Dict[str, Any]],
+                               data: List[Dict[str, Any]],
                                max_num_examples: Optional[int],
                                outfile: str,
                                filter_language: Optional[str] = None) -> None:
-
     error_log = []  # type: List[MrrSearchTester.QueryResult]
     # Sample the data if requested
     data = sample_data(data=data,
@@ -95,12 +95,13 @@ def generate_html_error_report(tester: MrrSearchTester,
                 sb.write('<div class="row">\n')
                 for pos, sample_idx in enumerate(query_result.top_ranked_idxs):
                     sb.write('<div class="col-sm">\n')
-                    sb.write(f'<strong>Result at {pos+1}</strong>\n')
+                    sb.write(f'<strong>Result at {pos + 1}</strong>\n')
                     sb.write(f'{data[sample_idx]["repo"]} {data[sample_idx]["path"]}:{data[sample_idx]["lineno"]}\n')
                     result_docstring = data[sample_idx]['docstring']
                     result_code = data[sample_idx]['code']
                     lang = data[sample_idx]['language']
-                    sb.write(f'<blockquote><p>  Docstring: <em>{result_docstring}</em></blockquote>\n{to_highlighted_html(result_code, language=lang)}\n\n')
+                    sb.write(
+                        f'<blockquote><p>  Docstring: <em>{result_docstring}</em></blockquote>\n{to_highlighted_html(result_code, language=lang)}\n\n')
                     sb.write('</div>\n')
                 sb.write('</div>\n<hr/>\n')
                 f.write(sb.getvalue())
@@ -156,6 +157,7 @@ def run(arguments):
                                max_num_examples=max_num_examples,
                                outfile=arguments['OUT_FILE'],
                                filter_language=arguments.get('--language-to-analyze'))
+
 
 if __name__ == '__main__':
     args = docopt(__doc__)

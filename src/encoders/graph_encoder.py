@@ -9,7 +9,7 @@ from utils import tfutils
 from utils.bpevocabulary import BpeVocabulary
 from utils.tfutils import pool_sequence_embedding
 from .encoder import Encoder, QueryType
-from .utils import ggnn_network, tree_processing, great_transformer_network, rnn_network, util
+from .utils import ggnn_network, great_transformer_network, rnn_network, util
 
 
 class GraphEncoder(Encoder):
@@ -143,7 +143,6 @@ class GraphEncoder(Encoder):
                                                      sequence_token_masks=node_token_masks)
 
             print('token encoding', token_encoding.shape)
-
 
             node_encodings = self._build_stack(node_tokens, is_train)
 

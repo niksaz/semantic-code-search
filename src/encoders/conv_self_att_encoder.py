@@ -2,9 +2,9 @@ from typing import Dict, Any
 
 import tensorflow as tf
 
-from .utils.bert_self_attention import BertConfig, BertModel
-from .masked_seq_encoder import MaskedSeqEncoder
 from utils.tfutils import get_activation, pool_sequence_embedding
+from .masked_seq_encoder import MaskedSeqEncoder
+from .utils.bert_self_attention import BertConfig, BertModel
 
 
 class ConvSelfAttentionEncoder(MaskedSeqEncoder):

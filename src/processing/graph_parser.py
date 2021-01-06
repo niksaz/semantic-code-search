@@ -1,6 +1,5 @@
-import sys
 import os
-
+import sys
 from lib2to3 import refactor
 from typing import Dict, Any
 
