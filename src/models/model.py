@@ -416,7 +416,7 @@ class Model(ABC):
             per_code_language_metadata: DefaultDict[str, Dict[str, Any]] = defaultdict(
                 self.__code_encoder_type.init_metadata)
 
-            for data_sample in data_pipeline.combined_samples_generator({data_pipeline.CODE_TOKENS_LABEL: file_path}):
+            for data_sample in tqdm.tqdm(data_pipeline.combined_samples_generator({data_pipeline.CODE_TOKENS_LABEL: file_path})):
                 sample_language = data_sample['language']
                 self.__code_encoder_type.load_metadata_from_sample(
                     data_sample if encoder_requires_full_sample(self.__code_encoder_type) else data_sample[
