@@ -88,7 +88,7 @@ def normalize_docstring(docstring: str):
 def remove_nodes_from_graph(graph: Dict[str, Any], nodes: List[int]):
     if 'nodes' in graph:
         graph_indices = list(range(len(graph['nodes'])))
-        for node in nodes:
+        for node in reversed(sorted(nodes)):
             graph['nodes'].pop(node)
             graph_indices.pop(node)
 
@@ -99,9 +99,8 @@ def remove_nodes_from_graph(graph: Dict[str, Any], nodes: List[int]):
                 for node in nodes:
                     if node in edges:
                         del edges[node]
-
                 for ind, v in enumerate(graph_indices):
-                    if ind != v:
+                    if v in edges and ind != v:
                         edges[ind] = edges[v]
                         del edges[v]
 
@@ -113,9 +112,8 @@ def normalize_graph(graph: Dict[str, Any]):
     if 'edges' in graph:
         for edge_type in graph['edges']:
             graph['edges'][edge_type] = {
-                int(v): list(sorted([int(u) for u in us]))
+                int(v): list(sorted([int(u) for u in graph['edges'][edge_type][v]]))
                 for v in graph['edges'][edge_type]
-                for us in graph['edges'][edge_type][v]
             }
 
     if 'nodes' in graph:
