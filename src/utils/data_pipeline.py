@@ -51,7 +51,7 @@ def _remove_docstring_from_graph(graph: Dict[str, Any]) -> Tuple[Optional[str], 
         str_statement = _get_child_with_type(graph, expr, 'Str')
         assert str_statement is not None
 
-        token = _get_child_with_type(graph, str_statement, 'LEAF')
+        token = graph['edges']['CHILD'][str_statement][0]
         assert token is not None
 
         return graph['nodes'][token], [expr, str_statement, token]
@@ -124,7 +124,8 @@ def normalize_graph(graph: Dict[str, Any]):
         remove_nodes_from_graph(graph, nodes_to_remove)
 
         if 'edges' in graph:
-            _, nodes_to_remove = _remove_docstring_from_graph(graph)
+            docstring, nodes_to_remove = _remove_docstring_from_graph(graph)
+            # print(docstring, nodes_to_remove)
             if len(nodes_to_remove) > 0:
                 remove_nodes_from_graph(graph, nodes_to_remove)
 
