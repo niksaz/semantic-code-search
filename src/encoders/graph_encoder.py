@@ -21,7 +21,8 @@ class GraphEncoder(Encoder):
         'token_pct_bpe': 0.5,
         'max_num_tokens': 200,
         'stack': [],
-        'is_plain': False
+        'is_plain': False,
+        'only_tokens': False
     }
 
     @classmethod
@@ -40,13 +41,17 @@ class GraphEncoder(Encoder):
             great_transformer_network.Transformer.default_config['num_layers'] = 10
         elif mode in ['transformer', 'transformermodel']:
             cls.encoder_hypers['stack'] = ['transformer']
+        elif mode in ['transformer-tokens', 'transformer-tokens-model']:
+            cls.encoder_hypers['stack'] = ['transformer']
+            cls.encoder_hypers['only_tokens'] = True
         elif mode in ['transformer10', 'transformer10model']:
             cls.encoder_hypers['stack'] = ['transformer']
             great_transformer_network.Transformer.default_config['num_layers'] = 10
         elif mode in ['graphnbow', 'graphnbowmodel']:
             cls.encoder_hypers['stack'] = []
-        elif mode in ['rnn', 'rnnmodel']:
+        elif mode in ['rnn-tokens', 'rnn-tokens-model']:
             cls.encoder_hypers['stack'] = ['rnn']
+            cls.encoder_hypers['only_tokens'] = True
         else:
             raise ValueError(f"Tried to update graph config with {mode}")
 
@@ -124,12 +129,6 @@ class GraphEncoder(Encoder):
     def make_model(self, is_train: bool = False) -> tf.Tensor:
         with tf.variable_scope('graph_encoder'):
             self._make_placeholders()
-            # seq_tokens = self.token_embedding_layer(self.placeholders['seq_token_ids'], suffix='_seq')
-            # print('seq tokens', seq_tokens.shape)
-            # seq_token_masks = self.placeholders['seq_masks']
-            # print('seq token masks', seq_token_masks.shape)
-            # seq_token_lens = tf.reduce_sum(seq_token_masks, axis=1)  # B
-            # print('seq token lens', seq_token_lens.shape)
 
             node_tokens = self.token_embedding_layer(self.placeholders['node_token_ids'], suffix='_node')
             print('node tokens', node_tokens.shape)
@@ -153,15 +152,6 @@ class GraphEncoder(Encoder):
                                                          sequence_lengths=node_token_lens,
                                                          sequence_token_masks=node_token_masks)
 
-            # node_encodings = self._build_stack(seq_tokens, is_train)
-            #
-            # if node_encodings is not None:
-            #     print('node encoding', node_encodings.shape)
-            #     graph_encoding = pool_sequence_embedding('mean',
-            #                                              sequence_token_embeddings=seq_tokens,
-            #                                              sequence_lengths=seq_token_lens,
-            #                                              sequence_token_masks=seq_token_masks)
-
         if node_encodings is None:
             return token_encoding
         if self.get_hyper('is_plain'):
@@ -174,7 +164,7 @@ class GraphEncoder(Encoder):
         raw_metadata = super().init_metadata()
         raw_metadata['token_counter'] = collections.Counter()
         raw_metadata['edge_types'] = set()
-        raw_metadata['nodes_by_tokens'] = list()
+        # raw_metadata['nodes_by_tokens'] = list()
         return raw_metadata
 
     @classmethod
@@ -187,7 +177,7 @@ class GraphEncoder(Encoder):
         edge_types = {edge_type for edge_type in data_to_load['edges']}
         raw_metadata['token_counter'].update(node_tokens)
         raw_metadata['edge_types'] = raw_metadata['edge_types'].union(edge_types)
-        raw_metadata['nodes_by_tokens'].append(len(data_to_load['sequence']))
+        # raw_metadata['nodes_by_tokens'].append(len(data_to_load['sequence']))
 
     @classmethod
     def finalise_metadata(cls, encoder_label: str, hyperparameters: Dict[str, Any],
@@ -200,7 +190,7 @@ class GraphEncoder(Encoder):
         for raw_metadata in raw_metadata_list:
             merged_token_counter += raw_metadata['token_counter']
             merged_edge_types = merged_edge_types.union(raw_metadata['edge_types'])
-            token_counts.extend(raw_metadata['nodes_by_tokens'])
+            # token_counts.extend(raw_metadata['nodes_by_tokens'])
 
         if hyperparameters[f'{encoder_label}_token_use_bpe']:
             token_vocabulary = BpeVocabulary(
@@ -220,9 +210,9 @@ class GraphEncoder(Encoder):
         final_metadata['token_vocab'] = token_vocabulary
         final_metadata['edge_type_mapping'] = {edge_type: i for i, edge_type in enumerate(merged_edge_types)}
         print('Edge type mapping:', final_metadata['edge_type_mapping'])
-        print("Percentiles:")
-        for p in [0, 1, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 95, 99, 99.9, 100]:
-            print(p, np.percentile(token_counts, p))
+        # print("Percentiles:")
+        # for p in [0, 1, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 95, 99, 99.9, 100]:
+        #     print(p, np.percentile(token_counts, p))
         return final_metadata
 
     @classmethod
@@ -234,7 +224,7 @@ class GraphEncoder(Encoder):
         assert 'edges' in data_to_load
 
         node_tokens = data_to_load['nodes']
-        seq_tokens = data_to_load['sequence']
+        # seq_tokens = data_to_load['sequence']
         # print(seq_tokens)
         edges = np.array([
             (metadata['edge_type_mapping'][edge_type], v, u)
@@ -249,18 +239,18 @@ class GraphEncoder(Encoder):
                 hyperparameters[f'{encoder_label}_max_num_tokens']
             )
         )
-        seq_token_ids, seq_mask = (
-            tfutils.convert_and_pad_token_sequence(
-                metadata['token_vocab'],
-                seq_tokens,
-                hyperparameters[f'{encoder_label}_max_num_tokens']
-            )
-        )
+        # seq_token_ids, seq_mask = (
+        #     tfutils.convert_and_pad_token_sequence(
+        #         metadata['token_vocab'],
+        #         seq_tokens,
+        #         hyperparameters[f'{encoder_label}_max_num_tokens']
+        #     )
+        # )
         result_holder[f'{encoder_label}_node_masks'] = mask
         result_holder[f'{encoder_label}_node_token_ids'] = node_token_ids
         result_holder[f'{encoder_label}_edges'] = edges
-        result_holder[f'{encoder_label}_seq_token_masks'] = seq_mask
-        result_holder[f'{encoder_label}_seq_token_ids'] = seq_token_ids
+        # result_holder[f'{encoder_label}_seq_token_masks'] = seq_mask
+        # result_holder[f'{encoder_label}_seq_token_ids'] = seq_token_ids
         return True
 
     def init_minibatch(self, batch_data: Dict[str, Any]) -> None:
@@ -268,7 +258,7 @@ class GraphEncoder(Encoder):
         batch_data['node_masks'] = []
         batch_data['node_token_ids'] = []
         batch_data['edges'] = []
-        batch_data['seq_masks'] = []
+        # batch_data['seq_masks'] = []
         batch_data['seq_token_ids'] = []
 
     def extend_minibatch_by_sample(self, batch_data: Dict[str, Any], sample: Dict[str, Any], is_train: bool = False,
@@ -278,8 +268,8 @@ class GraphEncoder(Encoder):
         current_sample['node_masks'] = sample[f'{self.label}_node_masks']
         current_sample['node_token_ids'] = sample[f'{self.label}_node_token_ids']
         current_sample['edges'] = sample[f'{self.label}_edges']
-        current_sample['seq_masks'] = sample[f'{self.label}_seq_token_masks']
-        current_sample['seq_token_ids'] = sample[f'{self.label}_seq_token_ids']
+        # current_sample['seq_masks'] = sample[f'{self.label}_seq_token_masks']
+        # current_sample['seq_token_ids'] = sample[f'{self.label}_seq_token_ids']
 
         for key, value in current_sample.items():
             if key in batch_data:
@@ -293,8 +283,8 @@ class GraphEncoder(Encoder):
         node_masks = batch_data['node_masks']
         node_token_ids = batch_data['node_token_ids']
         edges = batch_data['edges']
-        seq_masks = batch_data['seq_masks']
-        seq_token_ids = batch_data['seq_token_ids']
+        # seq_masks = batch_data['seq_masks']
+        # seq_token_ids = batch_data['seq_token_ids']
 
         if node_masks:
             # pad batches so that every batch has the same number of nodes
@@ -311,8 +301,8 @@ class GraphEncoder(Encoder):
         tfutils.write_to_feed_dict(feed_dict, self.placeholders['node_masks'], node_masks)
         tfutils.write_to_feed_dict(feed_dict, self.placeholders['node_token_ids'], node_token_ids)
         tfutils.write_to_feed_dict(feed_dict, self.placeholders['edges'], edges)
-        tfutils.write_to_feed_dict(feed_dict, self.placeholders['seq_masks'], seq_masks)
-        tfutils.write_to_feed_dict(feed_dict, self.placeholders['seq_token_ids'], seq_token_ids)
+        # tfutils.write_to_feed_dict(feed_dict, self.placeholders['seq_masks'], seq_masks)
+        # tfutils.write_to_feed_dict(feed_dict, self.placeholders['seq_token_ids'], seq_token_ids)
 
     def get_token_embeddings(self) -> Tuple[tf.Tensor, List[str]]:
         return self.__token_embeddings, list(self.metadata['token_vocab'].id_to_token)
