@@ -52,9 +52,9 @@ class ASTEncoder(Encoder):
             'token_use_bpe': True,
             'token_pct_bpe': 0.5,
 
-            'max_num_nodes': 100,
-            'max_num_tokens': 100,
-            'max_children': 100
+            'max_num_nodes': 200,
+            'max_num_tokens': 200,
+            'max_children': 200
         }
         hypers = super().get_default_hyperparameters()
         hypers.update(encoder_hypers)
