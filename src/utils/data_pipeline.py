@@ -51,7 +51,10 @@ def _remove_docstring_from_graph(graph: Dict[str, Any]) -> Tuple[Optional[str], 
         str_statement = _get_child_with_type(graph, expr, 'Str')
         assert str_statement is not None
 
-        token = graph['edges']['CHILD'][str_statement][0]
+        if str_statement in graph['edges']['CHILD'] and len(graph['edges']['CHILD'][str_statement]) > 0:
+            token = graph['edges']['CHILD'][str_statement][0]
+        else:
+            token = None
         assert token is not None
 
         return graph['nodes'][token], [expr, str_statement, token]
