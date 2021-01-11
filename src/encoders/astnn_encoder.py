@@ -4,6 +4,7 @@ from typing import Dict, Any, Tuple, List, Optional
 import numpy as np
 import tensorflow as tf
 
+import encoders.utils.tree_processing
 from utils import data_pipeline
 from utils import tfutils
 from .ast_encoder import ASTEncoder, _try_to_queue_node
@@ -15,9 +16,9 @@ STATEMENTS = ['function_definition', 'if_statement', 'while_statement', 'do_stat
 BRACES = ['(', ')', '{', '}', '[', ']']
 
 
-def _lineraize_non_block_tree_bfs(root: data_pipeline.TreeNode, nodes_queued: int,
-                                  max_nodes: int = -1) -> Tuple[List[data_pipeline.TreeNode], List[List[int]]]:
-    nodes: List[data_pipeline.TreeNode] = []
+def _lineraize_non_block_tree_bfs(root: encoders.utils.tree_processing.TreeNode, nodes_queued: int,
+                                  max_nodes: int = -1) -> Tuple[List[encoders.utils.tree_processing.TreeNode], List[List[int]]]:
+    nodes: List[encoders.utils.tree_processing.TreeNode] = []
     children: List[List[int]] = []
     node_queue = collections.deque()
     nodes_queued += _try_to_queue_node(root, node_queue, nodes_queued, max_nodes)
@@ -38,8 +39,8 @@ def _lineraize_non_block_tree_bfs(root: data_pipeline.TreeNode, nodes_queued: in
     return nodes, children
 
 
-def _get_tree_blocks(root: data_pipeline.TreeNode) -> List[data_pipeline.TreeNode]:
-    blocks: List[data_pipeline.TreeNode] = []
+def _get_tree_blocks(root: encoders.utils.tree_processing.TreeNode) -> List[encoders.utils.tree_processing.TreeNode]:
+    blocks: List[encoders.utils.tree_processing.TreeNode] = []
     node_queue = collections.deque()
     node_queue.append(root)
     while node_queue:
@@ -57,9 +58,9 @@ def _get_tree_blocks(root: data_pipeline.TreeNode) -> List[data_pipeline.TreeNod
 
 
 def _linearize_and_split_tree_bfs(
-        root: data_pipeline.TreeNode,
-        max_nodes: int = -1) -> Tuple[List[List[data_pipeline.TreeNode]], List[List[List[int]]]]:
-    nodes: List[List[data_pipeline.TreeNode]] = []
+        root: encoders.utils.tree_processing.TreeNode,
+        max_nodes: int = -1) -> Tuple[List[List[encoders.utils.tree_processing.TreeNode]], List[List[List[int]]]]:
+    nodes: List[List[encoders.utils.tree_processing.TreeNode]] = []
     children: List[List[List[int]]] = []
     blocks = _get_tree_blocks(root)
     nodes_queued = 0

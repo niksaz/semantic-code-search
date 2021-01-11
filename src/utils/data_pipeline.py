@@ -1,15 +1,14 @@
-import collections
 from typing import Any, Dict, Optional, Tuple, List
 
 import numpy as np
 from dpu_utils.utils import RichPath
 
+from encoders.utils.tree_processing import get_code_tokens_from_tree, TreeNode
+
 CODE_TOKENS_LABEL = 'code_tokens'
 TREE_LABEL = '_raw_trees'
 # COMPRESSED_TREE_LABEL = '_compressed_100'
 GRAPH_LABEL = '_graphs'
-
-TreeNode = collections.OrderedDict
 
 
 def _get_child_with_type(graph: Dict[str, Any], node: int, type_str: str) -> Optional[int]:
@@ -209,6 +208,7 @@ def combined_samples_generator(resource_mapping: Dict[str, Optional[RichPath]]):
                     graph, ast = _extract_graph_data(resource_item)
                     sample[GRAPH_LABEL] = graph
                     sample[TREE_LABEL] = ast
+                    sample[CODE_TOKENS_LABEL] = get_code_tokens_from_tree(ast)
                 else:
                     raise ValueError(f'Generator for {resource} is not implemented')
         except StopIteration:

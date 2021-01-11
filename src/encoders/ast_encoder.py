@@ -4,12 +4,13 @@ from typing import Dict, Any, Tuple, List
 import tensorflow as tf
 from dpu_utils.mlutils import Vocabulary
 
+import encoders.utils.tree_processing
 from utils import data_pipeline
 from .encoder import Encoder, QueryType
 
 
 def _try_to_queue_node(
-        node: data_pipeline.TreeNode,
+        node: encoders.utils.tree_processing.TreeNode,
         queue: collections.deque,
         nodes_queued: int,
         max_nodes: int) -> bool:
@@ -21,7 +22,7 @@ def _try_to_queue_node(
 
 
 def _get_tree_elements_seq(
-        root: data_pipeline.TreeNode,
+        root: encoders.utils.tree_processing.TreeNode,
         max_nodes: int = -1) -> Tuple[List[str], List[str]]:
     node_types: List[str] = []
     node_tokens: List[str] = []

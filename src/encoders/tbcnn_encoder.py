@@ -4,6 +4,7 @@ from typing import Dict, Any, Tuple, List, Optional
 import numpy as np
 import tensorflow as tf
 
+import encoders.utils.tree_processing
 from utils import data_pipeline
 from utils import tfutils
 from .ast_encoder import ASTEncoder, _try_to_queue_node
@@ -11,9 +12,9 @@ from .utils import tbcnn_network
 
 
 def _linearize_tree_bfs(
-        root: data_pipeline.TreeNode,
-        max_nodes: int = -1) -> Tuple[List[data_pipeline.TreeNode], List[List[int]]]:
-    nodes: List[data_pipeline.TreeNode] = []
+        root: encoders.utils.tree_processing.TreeNode,
+        max_nodes: int = -1) -> Tuple[List[encoders.utils.tree_processing.TreeNode], List[List[int]]]:
+    nodes: List[encoders.utils.tree_processing.TreeNode] = []
     children: List[List[int]] = []
     node_queue = collections.deque()
     nodes_queued = 0

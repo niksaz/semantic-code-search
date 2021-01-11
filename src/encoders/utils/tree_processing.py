@@ -3,11 +3,12 @@
 import collections
 from typing import Tuple, List
 
-from utils import data_pipeline
+
+TreeNode = collections.OrderedDict
 
 
 def try_to_queue_node(
-        node: data_pipeline.TreeNode,
+        node: TreeNode,
         queue: collections.deque,
         nodes_queued: int,
         max_nodes: int) -> bool:
@@ -19,10 +20,10 @@ def try_to_queue_node(
 
 
 def linearize_tree_bfs(
-        root: data_pipeline.TreeNode,
+        root: TreeNode,
         max_nodes: int = -1,
-        max_children: int = -1) -> Tuple[List[data_pipeline.TreeNode], List[List[int]]]:
-    nodes: List[data_pipeline.TreeNode] = []
+        max_children: int = -1) -> Tuple[List[TreeNode], List[List[int]]]:
+    nodes: List[TreeNode] = []
     children: List[List[int]] = []
     node_queue = collections.deque()
     nodes_queued = 0
@@ -40,13 +41,13 @@ def linearize_tree_bfs(
     return nodes, children
 
 
-def linearize_tree_dfs(node: data_pipeline.TreeNode, linearization: List[data_pipeline.TreeNode]):
+def linearize_tree_dfs(node: TreeNode, linearization: List[TreeNode]):
     linearization.append(node)
     for child in node['children']:
         linearize_tree_dfs(child, linearization)
 
 
-def get_code_tokens_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
+def get_code_tokens_from_tree(tree: TreeNode) -> List[str]:
     linearization = []
     linearize_tree_dfs(tree, linearization)
     code_tokens = []
@@ -56,14 +57,14 @@ def get_code_tokens_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
     return code_tokens
 
 
-def get_type_tokens_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
+def get_type_tokens_from_tree(tree: TreeNode) -> List[str]:
     linearization = []
     linearize_tree_dfs(tree, linearization)
     type_tokens = list(map(lambda node: node['type'], linearization))
     return type_tokens
 
 
-def get_type_bag_from_tree(tree: data_pipeline.TreeNode) -> List[str]:
+def get_type_bag_from_tree(tree: TreeNode) -> List[str]:
     type_tokens = get_type_tokens_from_tree(tree)
     type_bag = set(type_tokens)
     return list(type_bag)

@@ -130,7 +130,7 @@ if __name__ == '__main__':
         code_representations_all = []
         for ast_file, graph_file in zip(ast_files, graph_files):
             resource_mapping = {
-                data_pipeline.TREE_LABEL: ast_file,
+                # data_pipeline.TREE_LABEL: ast_file,
                 data_pipeline.GRAPH_LABEL: graph_file,
             }
             samples = []
@@ -139,7 +139,7 @@ if __name__ == '__main__':
                     'code_tokens': definitions[definitions_index]['function_tokens'],
                     'language': definitions[definitions_index]['language'],
                 }
-                for resource in resource_mapping.keys():
+                for resource in [data_pipeline.TREE_LABEL, data_pipeline.GRAPH_LABEL, data_pipeline.CODE_TOKENS_LABEL]:
                     sample[resource] = loaded_sample[resource]
                 samples.append(sample)
                 definitions_index += 1
