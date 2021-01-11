@@ -1,5 +1,3 @@
-# Author: Mikita Sazanovich
-
 import pickle
 from collections import Counter
 from typing import Dict, Any, List

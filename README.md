@@ -20,8 +20,7 @@ the problem, the data collection or the benchmark.
 ### Data
 
 To reproduce our experiments you should download the archive with all the
-resources (ASTs, graphs, embeddings):
-https://drive.google.com/file/d/1XPYViMkZTYae0DkbzTg3RB6-mG-x043E.
+resources (ASTs, graphs, embeddings): removed for anonymization purposes.
 
 Alternatively, you can download the CodeSearchNet benchmark data by running:
 
@@ -85,7 +84,7 @@ To work with parsers, do the following:
 
 ### Graph parsing
 
-For graph parsing we use [typilus fork](https://github.com/JetBrains-Research/typilus).
+For graph parsing we use a modified version of typilus (the link removed for anonymization purposes).
 To work with graph parsers, do the following:
 
 1. Clone the aforementioned repository to `src/processing/typilus`
@@ -103,29 +102,29 @@ TODO: finish the list
 You can load for the testing/evaluation using the run ids from the [Weights & Biases](https://wandb.ai).
 The pretrained models in the same order as they appear in the paper are:
 
-`NBOW`: [msazanovich/CodeSearchNet-src/33jlj8pn](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/33jlj8pn)
+`NBOW`: removed for anonymization purposes
 
-`NBOW + AST`: [msazanovich/CodeSearchNet-src/37f1j1l2](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/37f1j1l2)
+`NBOW + AST`: removed for anonymization purposes
 
-`AST node2vec`: [msazanovich/CodeSearchNet-src/ihap35bh](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/ihap35bh)
+`AST node2vec`: removed for anonymization purposes
 
-`TBCNN`: [msazanovich/CodeSearchNet-src/77y9fj1y](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/77y9fj1y)
+`TBCNN`: removed for anonymization purposes
 
-`ASTNN`: [egor-bogomolov/semantic-code-search-src/3qzilyhq](https://https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/3qzilyhq) 
+`ASTNN`: removed for anonymization purposes 
 
-`NBOW + graph`: [egor-bogomolov/semantic-code-search-src/3nq3g667](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/3nq3g667)
+`NBOW + graph`: removed for anonymization purposes
 
-`Graph node2vec`: [msazanovich/CodeSearchNet-src/1r3y07gk](https://wandb.ai/msazanovich/CodeSearchNet-src/runs/1r3y07gk)
+`Graph node2vec`: removed for anonymization purposes
 
-`Transformer + types`: [egor-bogomolov/semantic-code-search-src/2nf2sb3b](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/2nf2sb3b)
+`Transformer + types`: removed for anonymization purposes
 
-`GREAT`: [egor-bogomolov/semantic-code-search-src/334uyl5k](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/334uyl5k)
+`GREAT`: removed for anonymization purposes
 
-`GGNN`: [egor-bogomolov/semantic-code-search-src/2c1vwty5](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/2c1vwty5)
+`GGNN`: removed for anonymization purposes
 
-`GRU-GGNN`: [egor-bogomolov/semantic-code-search-src/1atdvf5p](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/1atdvf5p)
+`GRU-GGNN`: removed for anonymization purposes
 
-`Transformer-GGNN`: [egor-bogomolov/semantic-code-search-src/f35yfbis](https://wandb.ai/egor-bogomolov/semantic-code-search-src/runs/f35yfbis)
+`Transformer-GGNN`: removed for anonymization purposes
 
 ## Experimental results
 

@@ -1,5 +1,3 @@
-# Author: Mikita Sazanovich
-
 import collections
 from typing import Tuple, List
 
