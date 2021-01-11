@@ -22,12 +22,13 @@ class GraphEncoder(Encoder):
         'max_num_tokens': 200,
         'stack': [],
         'is_plain': False,
-        'only_tokens': False
+        'is_raw': False
     }
 
     @classmethod
-    def update_config(cls, mode: str, is_plain: bool):
+    def update_config(cls, mode: str, is_plain: bool, is_raw: bool=True):
         cls.encoder_hypers['is_plain'] = is_plain
+        cls.encoder_hypers['is_raw'] = is_raw
         if mode in ['ggnn', 'ggnnmodel']:
             cls.encoder_hypers['stack'] = ['ggnn-pure']
         elif mode in ['rnn-ggnn-sandwich']:
@@ -41,17 +42,13 @@ class GraphEncoder(Encoder):
             great_transformer_network.Transformer.default_config['num_layers'] = 10
         elif mode in ['transformer', 'transformermodel']:
             cls.encoder_hypers['stack'] = ['transformer']
-        elif mode in ['transformer-tokens', 'transformer-tokens-model']:
-            cls.encoder_hypers['stack'] = ['transformer']
-            cls.encoder_hypers['only_tokens'] = True
         elif mode in ['transformer10', 'transformer10model']:
             cls.encoder_hypers['stack'] = ['transformer']
             great_transformer_network.Transformer.default_config['num_layers'] = 10
         elif mode in ['graphnbow', 'graphnbowmodel']:
             cls.encoder_hypers['stack'] = []
-        elif mode in ['rnn-tokens', 'rnn-tokens-model']:
+        elif mode in ['rnn', 'rnnmodel']:
             cls.encoder_hypers['stack'] = ['rnn']
-            cls.encoder_hypers['only_tokens'] = True
         else:
             raise ValueError(f"Tried to update graph config with {mode}")
 
@@ -136,7 +133,7 @@ class GraphEncoder(Encoder):
             print('node token masks', node_token_masks.shape)
             node_token_lens = tf.reduce_sum(node_token_masks, axis=1)  # B
 
-            token_encoding = pool_sequence_embedding('mean',
+            token_encoding = pool_sequence_embedding('weighted_mean',
                                                      sequence_token_embeddings=node_tokens,
                                                      sequence_lengths=node_token_lens,
                                                      sequence_token_masks=node_token_masks)
@@ -148,7 +145,7 @@ class GraphEncoder(Encoder):
             if node_encodings is not None:
                 print('node encoding', node_encodings.shape)
                 graph_encoding = pool_sequence_embedding('mean',
-                                                         sequence_token_embeddings=node_tokens,
+                                                         sequence_token_embeddings=node_encodings,
                                                          sequence_lengths=node_token_lens,
                                                          sequence_token_masks=node_token_masks)
 
@@ -173,7 +170,8 @@ class GraphEncoder(Encoder):
         hypers = cls.get_default_hyperparameters()
         assert 'nodes' in data_to_load
         assert 'edges' in data_to_load
-        node_tokens = collections.Counter(token for token in data_to_load['nodes'])
+        token_source = data_to_load['nodes'] if not cls.encoder_hypers['is_raw'] else data_to_load['tokens']
+        node_tokens = collections.Counter(token for token in token_source)
         edge_types = {edge_type for edge_type in data_to_load['edges']}
         raw_metadata['token_counter'].update(node_tokens)
         raw_metadata['edge_types'] = raw_metadata['edge_types'].union(edge_types)
@@ -223,7 +221,7 @@ class GraphEncoder(Encoder):
         assert 'nodes' in data_to_load
         assert 'edges' in data_to_load
 
-        node_tokens = data_to_load['nodes']
+        node_tokens = data_to_load['nodes'] if not cls.encoder_hypers['is_raw'] else data_to_load['tokens']
         # seq_tokens = data_to_load['sequence']
         # print(seq_tokens)
         edges = np.array([

@@ -209,6 +209,7 @@ def combined_samples_generator(resource_mapping: Dict[str, Optional[RichPath]]):
                     sample[GRAPH_LABEL] = graph
                     sample[TREE_LABEL] = ast
                     sample[CODE_TOKENS_LABEL] = get_code_tokens_from_tree(ast)
+                    sample[GRAPH_LABEL]['tokens'] = sample[CODE_TOKENS_LABEL]
                 else:
                     raise ValueError(f'Generator for {resource} is not implemented')
         except StopIteration:

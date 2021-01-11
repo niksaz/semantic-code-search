@@ -15,6 +15,10 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
     model_name = model_name.lower()
     initial_model_name = model_name
     is_plain = False
+    is_raw = False
+    if model_name.endswith('-raw'):
+        is_raw = True
+        model_name = model_name[:-len('-raw')]
     if model_name.endswith('-plain'):
         is_plain = True
         model_name = model_name[:-len('-plain')]
@@ -47,17 +51,17 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
     elif model_name in ['transformer', 'transformermodel']:
         NeuralASTModel.MODEL_NAME = initial_model_name
         NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
-        GraphEncoder.update_config(model_name, is_plain)
+        GraphEncoder.update_config(model_name, is_plain, is_raw)
         return NeuralASTModel
     elif model_name in ['transformer10', 'transformer10model']:
         NeuralASTModel.MODEL_NAME = initial_model_name
         NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
-        GraphEncoder.update_config(model_name, is_plain)
+        GraphEncoder.update_config(model_name, is_plain, is_raw)
         return NeuralASTModel
     elif model_name in ['graphnbow', 'graphnbowmodel']:
         NeuralASTModel.MODEL_NAME = initial_model_name
         NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
-        GraphEncoder.update_config(model_name, False)
+        GraphEncoder.update_config(model_name, False, is_raw)
         return NeuralASTModel
     elif model_name == 'nbowtypesast':
         NeuralASTModel.MODEL_NAME = initial_model_name
@@ -90,7 +94,7 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
     elif model_name in ['rnn', 'rnnmodel']:
         NeuralASTModel.MODEL_NAME = initial_model_name
         NeuralASTModel.CODE_ENCODER_TYPE = GraphTokensEncoder
-        GraphEncoder.update_config(model_name, False)
+        GraphEncoder.update_config(model_name, is_plain, is_raw)
         return NeuralASTModel
     elif model_name in {'selfatt', 'selfattention', 'selfattentionmodel'}:
         return SelfAttentionModel
